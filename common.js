@@ -21,7 +21,6 @@ export const VOTE_SECONDS = 20;    // 라운드 투표 시간
 // t/a/b: 한국어, te/ae/be: 영어
 export const QUESTIONS = [
   { t: "평생 하나만", te: "Forever, pick one", a: "학식 평생 무료", ae: "Free campus meals for life", b: "매주 금요일 교수님 카드 회식", be: "Every Friday dinner on your advisor's card" },
-  { t: "연구실에 딱 하나 생긴다면", te: "If your lab could get just one", a: "최고급 커피머신", ae: "A top-tier coffee machine", b: "안마의자", be: "A massage chair" },
   { t: "학회 간다면", te: "Conference trip", a: "하와이, 대신 구두 발표", ae: "Hawaii, but you give an oral talk", b: "제주, 발표 없음", be: "Jeju, no presentation" },
   { t: "능력 하나를 준다면", te: "Pick one superpower", a: "실험 결과 미리 보기", ae: "See your experiment results in advance", b: "논문이 저절로 써짐", be: "Your papers write themselves" },
   { t: "보너스로 받는다면", te: "Pick your bonus", a: "인센티브 70만원", ae: "A ₩700K incentive", b: "눈치 안 보는 휴가 일주일 (교수님이 실험 다 해주심)", be: "A guilt-free week off (your advisor runs your experiments)" },
