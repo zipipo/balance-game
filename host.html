@@ -281,6 +281,27 @@ function startMusic(){
   };
   music = setInterval(tick, 60); tick();
 }
+// 대기 화면 음악: 통통 튀는 밝은 멜로디
+let lobbyMusic = null;
+function startLobby(){
+  if (lobbyMusic || !musicOn) return;
+  const a = ac();
+  const mel = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 988, 784, 659, 0,
+               440, 523, 659, 523, 494, 587, 784, 587, 523, 659, 784, 880, 784, 659, 523, 0];
+  const bass = [131, 131, 175, 175, 110, 110, 196, 131];
+  let step = 0, next = a.currentTime + .05;
+  const spb = .21;
+  lobbyMusic = setInterval(() => {
+    while (next < a.currentTime + .3) {
+      const t0 = next - a.currentTime, f = mel[step % 32];
+      if (f) tone(f, spb * .85, t0, "triangle", .07);
+      if (step % 4 === 0) tone(bass[(step / 4) % 8], spb * 3.2, t0, "sine", .13);
+      if (step % 2 === 1) hat(t0, .025);
+      next += spb; step++;
+    }
+  }, 60);
+}
+function stopLobby(){ if (lobbyMusic) { clearInterval(lobbyMusic); lobbyMusic = null; } }
 function stopMusic(){ if (music) { clearInterval(music); music = null; } }
 function hat(t0, g){
   const a = ac(), buf = a.createBuffer(1, 800, a.sampleRate), d = buf.getChannelData(0);
@@ -321,6 +342,7 @@ function render(){
     $("bStart").disabled = ids.length < 2;
   }
   if (ph === "voting") startMusic(); else stopMusic();
+  if (ph === "lobby") startLobby(); else stopLobby();
   if (ph === "voting" || ph === "countdown") {
     show("voting");
     const q = qOf(); $("qText").textContent = q.t; $("qa").textContent = q.a; $("qb").textContent = q.b;
@@ -342,7 +364,7 @@ function render(){
 // 소리 상태 표시
 setInterval(() => {
   const st = AC ? AC.state : "none";
-  $("snd").textContent = st !== "running" ? "소리 꺼짐: 화면 한 번 클릭" : music ? "음악 재생 중" : "소리 켜짐";
+  $("snd").textContent = st !== "running" ? "소리 꺼짐: 화면 한 번 클릭" : (music || lobbyMusic) ? "음악 재생 중" : "소리 켜짐";
 }, 500);
 
 // 타이머
@@ -502,7 +524,7 @@ $("bTest").onclick = async () => {
   const a = ac(); if (a.state !== "running") await a.resume();
   dudung(); setTimeout(fanfare, 1100);
 };
-$("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) stopMusic(); else if (S.phase === "voting") startMusic(); };
+$("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) { stopMusic(); stopLobby(); } else render(); };
 $("bReplay").onclick = () => { shownRound = null; playReveal(false); };
 
 $("bNext").onclick = async () => {
@@ -548,7 +570,7 @@ $("joinedChips").addEventListener("click", async e => {
   if (!confirm(`${nameOf(id)} 입장을 풀까요? 새 폰으로 다시 들어올 수 있게 돼요.`)) return;
   await remove(ref(db, P(`pins/${id}`))); await remove(ref(db, P(`pub/joined/${id}`)));
 });
-document.addEventListener("click", () => { const a = ac(); if (a.state === "suspended") a.resume(); });
+document.addEventListener("click", () => { const a = ac(); if (a.state === "suspended") a.resume(); render(); });
 document.addEventListener("keydown", e => { if (e.key === "h" || e.key === "H") $("ctl").classList.toggle("hidden"); });
 </script>
 </body>
