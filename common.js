@@ -20,14 +20,13 @@ export const VOTE_SECONDS = 20;    // 라운드 투표 시간
 // 앞 8개를 기본으로 쓰고, 뒤 4개는 예비
 // t/a/b: 한국어, te/ae/be: 영어
 export const QUESTIONS = [
+  { t: "사수 선배", te: "Your senior mentor", a: "천재인데 불친절함", ae: "A genius but unfriendly", b: "친절한데 자주 틀림", be: "Kind but often wrong" },
   { t: "평생 하나만", te: "Forever, pick one", a: "학식 평생 무료", ae: "Free campus meals for life", b: "매주 금요일 교수님 카드 회식", be: "Every Friday dinner on your advisor's card" },
   { t: "학회 간다면", te: "Conference trip", a: "하와이, 대신 구두 발표", ae: "Hawaii, but you give an oral talk", b: "제주, 발표 없음", be: "Jeju, no presentation" },
-  { t: "능력 하나를 준다면", te: "Pick one superpower", a: "실험 결과 미리 보기", ae: "See your experiment results in advance", b: "논문이 저절로 써짐", be: "Your papers write themselves" },
   { t: "보너스로 받는다면", te: "Pick your bonus", a: "인센티브 70만원", ae: "A ₩700K incentive", b: "눈치 안 보는 휴가 일주일 (교수님이 실험 다 해주심)", be: "A guilt-free week off (your advisor runs your experiments)" },
   { t: "랩미팅, 차라리 이게 낫다", te: "Lab meeting: which is better?", a: "월요일 오전 9시", ae: "Monday 9 AM", b: "금요일 오후 4시", be: "Friday 4 PM" },
   { t: "휴가 스타일", te: "Your time off", a: "매달 하루 연차 (모아서 못 씀)", ae: "One day off every month (cannot save them up)", b: "5일 연속 휴가 (여름·겨울 다 가능, 쪼개기 불가)", be: "5 days in a row (summer or winter, cannot split)" },
   { t: "학회 발표에서 더 무서운 것", te: "Scarier at a conference talk", a: "영어 질문 폭탄", ae: "A flood of questions in English", b: "아무도 질문 안 함", be: "Nobody asks anything" },
-  { t: "사수 선배", te: "Your senior mentor", a: "천재인데 불친절함", ae: "A genius but unfriendly", b: "친절한데 자주 틀림", be: "Kind but often wrong" },
   { t: "주말 vs 평일", te: "Weekend vs weekdays", a: "평일 5시 퇴근, 토요일도 출근", ae: "Leave at 5 PM, but work Saturdays too", b: "주말 다 쉬고 평일 밤 9시 퇴근", be: "Weekends off, leave at 9 PM on weekdays" },
   { t: "더 끔찍한 아침", te: "The worse morning", a: "-80℃ 냉동고 고장", ae: "The -80℃ freezer broke down", b: "인큐베이터 전체 오염", be: "The whole incubator is contaminated" },
   // 예비
