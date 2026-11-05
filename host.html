@@ -194,7 +194,6 @@
   <button id="bSkip">문제 바꾸기</button>
   <button id="bCustom">직접 문제 입력</button>
   <button id="bReplay">결과 다시 보기</button>
-  <button id="bTest">소리 테스트</button>
   <button id="bMusic">음악 끄기</button>
   <button id="bReset">처음부터</button>
   <span class="info" id="snd"></span><span class="info" id="info">H 키: 버튼 숨기기</span>
@@ -520,10 +519,6 @@ async function playReveal(instant){
   if (!S.shown) await update(ref(db, P("pub/state")), { shown: true });
   animating = false;
 }
-$("bTest").onclick = async () => {
-  const a = ac(); if (a.state !== "running") await a.resume();
-  dudung(); setTimeout(fanfare, 1100);
-};
 $("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) { stopMusic(); stopLobby(); } else render(); };
 $("bReplay").onclick = () => { shownRound = null; playReveal(false); };
 
