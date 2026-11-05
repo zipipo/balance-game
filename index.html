@@ -163,6 +163,8 @@ function render(){
     return;
   }
   if (st === "qualified") { v.innerHTML = `<p class="big"><span class="badge gold">상위 10명 확정 · Top 10</span></p><p class="msg">남은 자리 경쟁을 구경해 주세요 <br><span class="en">Sit back and enjoy the rest.</span></p>`; return; }
+  const played = Object.values(H).some(h => [...(h.A || []), ...(h.B || []), ...(h.N || [])].includes(me.id));
+  if (st === "out" && !played) { v.innerHTML = `<p class="big">게임이 이미 시작됐어요<br><span class="en">The game already started</span></p><p class="msg">이번 판은 화면으로 구경해 주세요. 핀볼 추첨은 그대로 참여해요.<br><span class="en">Enjoy watching. You're still in the lucky draw!</span></p>`; return; }
   if (st === "out") { v.innerHTML = `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">아쉽지만 여기까지!<br><span class="en">That's it for you. Enjoy the show!</span></p>`; return; }
 
   const label = S.mode === "playoff" ? `${S.round}라운드 · 패자부활전 <span class="en">Revival</span>` : `${S.round}라운드 <span class="en">Round ${S.round}</span>`;
@@ -185,10 +187,17 @@ function render(){
   if (S.phase === "countdown" || !S.shown || !h) {
     v.innerHTML = `<p class="big">마감! <span class="en">Time\'s up!</span></p><p class="msg">${mine}<br>앞 화면을 봐 주세요 <br><span class="en">Watch the screen</span></p>`; return;
   }
+  const nx = h.next || {}, inQual = !!(nx.qualified && nx.qualified[me.id]), inNext = !!(nx.contenders && nx.contenders[me.id]);
   const live = (h.survivors || []).includes(me.id);
+  if (inQual && !live) {
+    v.innerHTML = `<p class="big"><span class="badge gold">상위 10명 확정 · Top 10</span></p><p class="msg">${mine}</p>`; return;
+  }
+  if (!live && inNext) {
+    v.innerHTML = `<p class="big"><span class="badge alive">아직 기회 있어요!</span><br><span class="en">You're still in!</span></p><p class="msg">${mine}<br>${h.mode === "normal" ? "패자부활전에 들어가요." : "남은 자리를 두고 한 번 더 해요."}<br><span class="en">One more round for the remaining spots.</span></p>`; return;
+  }
   v.innerHTML = live
     ? `<p class="big"><span class="badge alive">생존! Survived</span></p><p class="msg">${mine}<br>다음 라운드를 기다려 주세요.<br><span class="en">Wait for the next round.</span></p>`
-    : `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">${mine}<br>${S.mode === "normal" ? "10명 밑으로 떨어지면 패자부활전이 열려요. 기다려 봐요!<br><span class=en>If fewer than 10 survive, there is a revival round. Stay tuned!</span>" : "아쉽지만 여기까지!<br><span class=en>That\'s it for you.</span>"}</p>`;
+    : `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">${mine}<br>아쉽지만 여기까지! 핀볼 추첨은 그대로 참여해요.<br><span class=en>That's it for this game. You're still in the lucky draw!</span></p>`;
 }
 
 // 저장된 로그인 있으면 자동 입장

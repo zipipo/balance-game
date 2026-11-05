@@ -104,6 +104,8 @@
   .title,#lobby h1,#qText,.card .v,.card .k,.vs,#clock,#voted,.num,.lab,.nm,#verdict,#summary,#end h1,#winners span,.count,#count,#rq,.chip,.pill,.meta,#noneRow{font-family:"Jua","OmyuPretty",sans-serif}
   #lobby li,#lobby .howto,#ctl{font-family:"OmyuPretty",Pretendard,sans-serif}
   .adv{font-size:.55em;margin-left:.25em;opacity:.75;font-family:"OmyuPretty",sans-serif}
+  #toast{position:fixed;left:50%;top:14vh;transform:translateX(-50%);background:var(--ink);color:#fff;padding:1.4vh 3vh;border-radius:1.6vh;font-size:3vh;font-family:"Jua",sans-serif;opacity:0;transition:opacity .3s;z-index:50;pointer-events:none}
+  #toast.on{opacity:1}
   /* 진행자 버튼 */
   #ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:1vh;justify-content:center;padding:1.4vh;background:#fafafa;border-top:1px solid var(--line);z-index:30}
   #ctl button{padding:1.2vh 2.2vh;border-radius:1.2vh;font-size:2vh;background:#ececf2;color:var(--ink)}
@@ -185,6 +187,7 @@
 <div class="walker" id="w2"></div>
 <div id="count" class="hidden"></div>
 <div id="picker" class="hidden"></div>
+<div id="toast"></div>
 <div id="verdict"></div>
 
 <div id="ctl">
@@ -194,6 +197,7 @@
   <button id="bSkip">문제 바꾸기</button>
   <button id="bCustom">직접 문제 입력</button>
   <button id="bReplay">결과 다시 보기</button>
+  <button id="bDraw">남은 자리 랜덤</button>
   <button id="bMusic">음악 끄기</button>
   <button id="bReset">처음부터</button>
   <span class="info" id="snd"></span><span class="info" id="info">H 키: 버튼 숨기기</span>
@@ -319,11 +323,12 @@ const contenders = () => keys(G.contenders);
 function render(){
   const ph = S.phase || "lobby";
   $("bStart").classList.toggle("hidden", ph !== "lobby");
-  $("bClose").classList.toggle("hidden", ph !== "voting");
+  $("bClose").classList.toggle("hidden", !(ph === "voting" || (ph === "countdown" && !closing)));
   $("bSkip").classList.toggle("hidden", ph !== "voting");
   $("bCustom").classList.toggle("hidden", ph !== "voting");
   $("bNext").classList.toggle("hidden", ph !== "reveal");
   $("bReplay").classList.toggle("hidden", ph !== "reveal");
+  $("bDraw").classList.toggle("hidden", ph !== "reveal");
 
   const qual = keys(G.qualified).length;
   const modeTag = S.mode === "playoff" ? `<span class="pill play">패자부활전 Revival · 남은 자리 ${S.slots}</span>` : "";
@@ -404,7 +409,7 @@ $("bStart").onclick = async () => {
 };
 
 async function closeVote(){
-  if (closing || S.phase !== "voting") return;
+  if (closing || (S.phase !== "voting" && S.phase !== "countdown")) return;
   closing = true; ac();
   await update(ref(db, P("pub/state")), { phase: "countdown" });
   const ov = $("count"); ov.classList.remove("hidden");
@@ -426,14 +431,14 @@ async function judge(){
   if (!A.length && !B.length) {
     // 아무도 안 눌렀으면 탈락 없이 같은 문제로 다시 투표
     await update(ref(db, P("pub/state")), { phase: "voting", deadline: Date.now() + VOTE_SECONDS * 1000 });
-    alert("아무도 투표하지 않아서 같은 문제로 다시 투표해요.");
+    toast("아무도 투표하지 않아서 같은 문제로 다시 투표해요 · No votes, voting again");
     return;
   }
   else if (A.length === B.length) { win = "tie"; surv = [...A, ...B]; }
   else { win = A.length > B.length ? "A" : "B"; surv = win === "A" ? A : B; }
 
   let Q = keys(G.qualified), slots = S.slots || TARGET, next = { mode, slots, end: false }, cont = surv;
-  const out = C.filter(id => !surv.includes(id));
+  const out = C.filter(id => !surv.includes(id) && !N.includes(id)); // 다음 기회는 투표한 사람만 (미투표는 완전 탈락)
   if (win !== "void") {
     if (mode === "normal") {
       if (surv.length === TARGET) { Q = surv; cont = []; next.end = true; }
@@ -461,6 +466,7 @@ async function judge(){
 
 // 결과 연출
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 3500); }
 function animBar(el, numEl, from, to, total, ms){
   return new Promise(res => {
     const t0 = performance.now();
@@ -525,10 +531,22 @@ async function playReveal(instant){
   animating = false;
 }
 $("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) { stopMusic(); stopLobby(); } else render(); };
-$("bReplay").onclick = () => { shownRound = null; playReveal(false); };
+$("bReplay").onclick = () => { if (animating) return; shownRound = null; playReveal(false); };
 
+// 모두 같은 쪽만 골라서 안 끝날 때: 남은 자리를 지금 도전자 중에서 랜덤으로 채우고 끝내기
+$("bDraw").onclick = async () => {
+  const h = H[`r${S.round}`]; if (!h || animating || closing) return;
+  const nx = h.next || {};
+  if (nx.end) return toast("이미 상위 인원이 다 정해졌어요");
+  const Q = keys(nx.qualified), pool = keys(nx.contenders), need = TARGET - Q.length;
+  if (!confirm(`도전자 ${pool.length}명 중 ${need}명을 랜덤으로 뽑아서 끝낼까요?`)) return;
+  const pick = pool.sort(() => Math.random() - .5).slice(0, need);
+  const m = {}; [...Q, ...pick].forEach(id => m[id] = true);
+  await set(ref(db, P("pub/game")), { contenders: null, qualified: m });
+  await update(ref(db, P("pub/state")), { phase: "end" }); fanfare();
+};
 $("bNext").onclick = async () => {
-  const h = H[`r${S.round}`]; if (!h || animating) return;
+  const h = H[`r${S.round}`]; if (!h || animating || closing) return;
   const nx = h.next;
   await set(ref(db, P("pub/game")), { contenders: nx.contenders || null, qualified: nx.qualified || null });
   if (nx.end) { await update(ref(db, P("pub/state")), { phase: "end" }); fanfare(); return; }
