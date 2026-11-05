@@ -29,12 +29,12 @@
   #lobby .howto .en{font-size:2.4vh}
   #lobby .right{display:flex;flex-direction:column;align-items:center;gap:2vh}
   #qr{padding:2vh;background:#fff;border:.4vh solid var(--ink);border-radius:2vh}
-  #qr img,#qr canvas{width:30vh !important;height:30vh !important}
+  #qr img,#qr canvas{width:var(--qr,30vh) !important;height:var(--qr,30vh) !important}
   .url{font-size:2.8vh;font-weight:700}
   .count{font-size:5.5vh;font-weight:900}
-  #lobby .right{width:38vw}
-  #joinedChips{display:flex;flex-wrap:wrap;justify-content:center;gap:.6vh;max-height:20vh;overflow:hidden}
-  .chip{cursor:pointer;padding:.4vh 1.1vh;border-radius:999px;background:#f1eefc;font-size:2.1vh;font-weight:700}
+  #lobby .right{width:40vw;gap:1.4vh !important}
+  #joinedChips{display:flex;flex-wrap:wrap;justify-content:center;gap:.4vh;max-height:46vh;overflow:hidden}
+  .chip{cursor:pointer;padding:.25vh .8vh;border-radius:999px;background:#f1eefc;font-size:var(--chip,2.1vh);font-weight:700}
 
   /* 투표 화면 */
   #voting{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh}
@@ -63,18 +63,18 @@
   .cols{flex:1;display:flex;gap:3vw;min-height:0}
   .col{flex:1;display:flex;flex-direction:column;gap:1.2vh;min-height:0;transition:opacity .6s,filter .6s}
   .col.lose{opacity:.28;filter:grayscale(1)}
-  .barwrap{height:18vh;display:flex;align-items:flex-end;gap:2vw;border-bottom:.4vh solid var(--ink)}
+  .barwrap{height:var(--barh,18vh);display:flex;align-items:flex-end;gap:2vw;border-bottom:.4vh solid var(--ink)}
   .bar{width:30%;height:0;border-radius:1.6vh 1.6vh 0 0}
   .col.A .bar{background:var(--a-deep)} .col.B .bar{background:var(--b-deep)}
-  .num{font-size:11vh;line-height:1}
+  .num{font-size:var(--numf,11vh);line-height:1}
   .num small{font-size:3vh;margin-left:.6vh}
   .lab{font-size:4.4vh}
   .lab .en{font-size:2.6vh;margin-top:.3vh}
   .lab .side{display:inline-block;padding:0 1.2vh;border-radius:1vh;margin-right:1vh}
   .col.A .side{background:var(--a)} .col.B .side{background:var(--b)}
-  .names{display:flex;flex-wrap:wrap;gap:.6vh;align-content:flex-start;overflow:hidden;opacity:0;transition:opacity .5s}
+  .names{display:flex;flex-wrap:wrap;gap:.45vh;align-content:flex-start;overflow:hidden;opacity:0;transition:opacity .5s}
   .names.show{opacity:1}
-  .nm{padding:.4vh 1.1vh;border-radius:1vh;font-size:var(--nm,2.9vh);background:#f3f3f6}
+  .nm{line-height:1.25;padding:.2vh .9vh;border-radius:1vh;font-size:var(--nm,2.9vh);background:#f3f3f6}
   .col.A .nm{background:#ffe3ea} .col.B .nm{background:#e2f1ff}
   .win .nm{animation:shine 1.2s ease-out}
   @keyframes shine{0%{transform:scale(1.15)}100%{transform:scale(1)}}
@@ -102,6 +102,7 @@
   #picker button.close{grid-column:1/-1;text-align:center;background:var(--ink);color:#fff}
   .title,#lobby h1,#qText,.card .v,.card .k,.vs,#clock,#voted,.num,.lab,.nm,#verdict,#summary,#end h1,#winners span,.count,#count,#rq,.chip,.pill,.meta,#noneRow{font-family:"Jua","OmyuPretty",sans-serif}
   #lobby li,#lobby .howto,#ctl{font-family:"OmyuPretty",Pretendard,sans-serif}
+  .adv{font-size:.55em;margin-left:.25em;opacity:.75;font-family:"OmyuPretty",sans-serif}
   /* 진행자 버튼 */
   #ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:1vh;justify-content:center;padding:1.4vh;background:#fafafa;border-top:1px solid var(--line);z-index:30}
   #ctl button{padding:1.2vh 2.2vh;border-radius:1.2vh;font-size:2vh;background:#ececf2;color:var(--ink)}
@@ -198,7 +199,7 @@
 </div>
 
 <script type="module">
-import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, advOf, setNames, keys } from "./common.js";
+import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, advOf, nameHtml, setNames, keys } from "./common.js";
 
 const $ = id => document.getElementById(id);
 let S = {}, G = {}, J = {}, V = {}, H = {}, votePath = null, animating = false, shownRound = null, closing = false;
@@ -311,7 +312,10 @@ function render(){
     show("lobby");
     const ids = keys(J);
     $("joinCount").textContent = `입장 ${ids.length} / ${TOTAL}명`;
-    $("joinedChips").innerHTML = ids.sort((a, b) => J[a].t - J[b].t).map(id => `<span class="chip" data-id="${id}">${nameOf(id)}</span>`).join("");
+    // 사람이 많아지면 QR·칩을 줄여서 한 화면에 다 들어가게
+    document.documentElement.style.setProperty("--chip", ids.length > 55 ? "1.45vh" : ids.length > 35 ? "1.75vh" : "2.1vh");
+    document.documentElement.style.setProperty("--qr", ids.length > 55 ? "19vh" : ids.length > 35 ? "25vh" : "30vh");
+    $("joinedChips").innerHTML = ids.sort((a, b) => J[a].t - J[b].t).map(id => `<span class="chip" data-id="${id}">${nameHtml(id)}</span>`).join("");
     $("bStart").disabled = ids.length < 2;
   }
   if (ph === "voting") startMusic(); else stopMusic();
@@ -329,7 +333,7 @@ function render(){
   if (ph === "end") {
     show("end");
     const w = keys(G.qualified);
-    $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s"><span>${nameOf(id)}</span>${advOf(id) ? `<small>${advOf(id)} 교수님</small>` : ""}</div>`).join("");
+    $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s"><span>${nameOf(id)}</span>${advOf(id) ? `<small>(${advOf(id)}교수님)</small>` : ""}</div>`).join("");
   }
 }
 
@@ -453,10 +457,12 @@ async function playReveal(instant){
   ["colA", "colB"].forEach(c => $(c).classList.remove("lose", "win"));
   ["namesA", "namesB", "noneRow", "summary"].forEach(c => $(c).classList.remove("show"));
   const big = Math.max(A.length, B.length);
-  document.documentElement.style.setProperty("--nm", big > 40 ? "1.9vh" : big > 28 ? "2.3vh" : big > 16 ? "2.7vh" : "3.4vh");
-  $("namesA").innerHTML = A.map(id => `<span class="nm">${nameOf(id)}</span>`).join("");
-  $("namesB").innerHTML = B.map(id => `<span class="nm">${nameOf(id)}</span>`).join("");
-  $("noneRow").innerHTML = N.length ? `미투표 탈락 <span class="en">No vote</span> ${N.length}명: ${N.map(nameOf).join(", ")}` : "";
+  document.documentElement.style.setProperty("--nm", big > 34 ? "1.75vh" : big > 24 ? "2.1vh" : big > 14 ? "2.6vh" : "3.4vh");
+  document.documentElement.style.setProperty("--barh", big > 24 ? "11vh" : "18vh");
+  document.documentElement.style.setProperty("--numf", big > 24 ? "8vh" : "11vh");
+  $("namesA").innerHTML = A.map(id => `<span class="nm">${nameHtml(id)}</span>`).join("");
+  $("namesB").innerHTML = B.map(id => `<span class="nm">${nameHtml(id)}</span>`).join("");
+  $("noneRow").innerHTML = N.length ? `미투표 탈락 <span class="en">No vote</span> ${N.length}명: ${N.map(nameHtml).join(", ")}` : "";
 
   const lo = Math.min(A.length, B.length);
   if (instant) {
@@ -531,7 +537,7 @@ $("bReset").onclick = async () => {
 };
 // 폰을 바꾼 사람: 이름 칩을 누르면 등록을 풀어서 새 폰으로 다시 들어올 수 있게
 $("joinedChips").addEventListener("click", async e => {
-  const id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  const el = e.target.closest(".chip"); const id = el && el.dataset.id; if (!id) return;
   if (!confirm(`${nameOf(id)} 입장을 풀까요? 새 폰으로 다시 들어올 수 있게 돼요.`)) return;
   await remove(ref(db, P(`pins/${id}`))); await remove(ref(db, P(`pub/joined/${id}`)));
 });

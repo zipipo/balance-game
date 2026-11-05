@@ -78,10 +78,10 @@ $("advGrid").querySelectorAll("button").forEach(btn => btn.onclick = async () =>
   const s = await get(ref(db, `advisors/${pickAdv}`));
   if (pickAdv !== btn.dataset.p) return;
   const list = Object.entries(s.val() || {}).sort((a, b) => a[1].n.localeCompare(b[1].n, "ko"));
-  $("nmGrid").innerHTML = list.map(([id, r]) => `<button data-id="${id}" data-d="${r.d}">${r.n}</button>`).join("");
+  $("nmGrid").innerHTML = list.map(([id, r]) => `<button data-id="${id}" data-n="${r.n}">${r.n}</button>`).join("");
   $("nmGrid").querySelectorAll("button").forEach(nb => nb.onclick = () => {
     $("nmGrid").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === nb));
-    pickId = nb.dataset.id; pickName = nb.dataset.d; $("go").disabled = false; $("err").textContent = "";
+    pickId = nb.dataset.id; pickName = nb.dataset.n; $("go").disabled = false; $("err").textContent = "";
     $("go").scrollIntoView({ behavior: "smooth", block: "center" });
   });
 });
