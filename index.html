@@ -28,6 +28,8 @@
   .q{text-align:center;font-size:20px;line-height:1.4}
   .choice{width:100%;min-height:120px;border-radius:20px;font-size:22px;line-height:1.35;padding:18px;color:var(--ink);transition:transform .08s}
   .choice:active{transform:scale(.97)}
+  #view{display:flex;flex-direction:column;gap:12px}
+  .vsgap{text-align:center;font-family:"Jua",sans-serif;font-size:18px;margin:6px 0}
   .choice.A{background:var(--a)} .choice.B{background:var(--b)}
   .choice .ce{display:block;font-size:15px;margin-top:6px}
   .q .qe{font-size:15px;margin-top:4px}
@@ -169,6 +171,7 @@ function render(){
       <div class="round">${label}</div>
       <div class="q">${q.t || ""}<div class="en qe">${q.te || ""}</div></div>
       <button class="choice A ${myVote==="A"?"on":myVote?"dim":""}" id="cA"><span class="tag">빨강 <span class="en">RED</span></span>${q.a || ""}<span class="en ce">${q.ae || ""}</span></button>
+      <div class="vsgap">vs</div>
       <button class="choice B ${myVote==="B"?"on":myVote?"dim":""}" id="cB"><span class="tag">파랑 <span class="en">BLUE</span></span>${q.b || ""}<span class="en ce">${q.be || ""}</span></button>
       <div class="timer" id="timer"></div>
       <p class="msg" style="font-size:14px">${myVote ? "투표 완료! 마감 전까지 바꿀 수 있어요.<br><span class=en>Voted! You can change it until time runs out.</span>" : "더 많은 사람이 고를 것 같은 쪽을 누르세요.<br><span class=en>Tap the side you think MORE people will pick.</span>"}</p>`;
