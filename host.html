@@ -178,7 +178,7 @@
   </section>
 
   <section id="end" class="hidden">
-    <h1>상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
+    <h1 id="endTitle">상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
     <div id="winners"></div>
   </section>
 </div>
@@ -197,7 +197,7 @@
   <button id="bSkip">문제 바꾸기</button>
   <button id="bCustom">직접 문제 입력</button>
   <button id="bReplay">결과 다시 보기</button>
-  <button id="bDraw">남은 자리 랜덤</button>
+  <button id="bDraw">남은 자리 랜덤 채우기</button>
   <button id="bMusic">음악 끄기</button>
   <button id="bReset">처음부터</button>
   <span class="info" id="snd"></span><span class="info" id="info">H 키: 버튼 숨기기</span>
@@ -328,7 +328,7 @@ function render(){
   $("bCustom").classList.toggle("hidden", ph !== "voting");
   $("bNext").classList.toggle("hidden", ph !== "reveal");
   $("bReplay").classList.toggle("hidden", ph !== "reveal");
-  $("bDraw").classList.toggle("hidden", ph !== "reveal");
+  $("bDraw").classList.toggle("hidden", !(ph === "reveal" || (ph === "end" && keys(G.qualified).length < TARGET)));
 
   const qual = keys(G.qualified).length;
   const modeTag = S.mode === "playoff" ? `<span class="pill play">패자부활전 Revival · 남은 자리 ${S.slots}</span>` : "";
@@ -364,6 +364,7 @@ function render(){
   if (ph === "end") {
     show("end");
     const w = keys(G.qualified);
+    $("endTitle").innerHTML = `상위 ${w.length}명 <span class="en" style="font-size:4vh">Top ${w.length}</span>`;
     $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s"><span>${nameOf(id)}</span>${advOf(id) ? `<small>(${advOf(id)}교수님)</small>` : ""}</div>`).join("");
   }
 }
@@ -535,11 +536,21 @@ $("bReplay").onclick = () => { if (animating) return; shownRound = null; playRev
 
 // 모두 같은 쪽만 골라서 안 끝날 때: 남은 자리를 지금 도전자 중에서 랜덤으로 채우고 끝내기
 $("bDraw").onclick = async () => {
-  const h = H[`r${S.round}`]; if (!h || animating || closing) return;
-  const nx = h.next || {};
-  if (nx.end) return toast("이미 상위 인원이 다 정해졌어요");
-  const Q = keys(nx.qualified), pool = keys(nx.contenders), need = TARGET - Q.length;
-  if (!confirm(`도전자 ${pool.length}명 중 ${need}명을 랜덤으로 뽑아서 끝낼까요?`)) return;
+  if (animating || closing) return;
+  let Q, pool;
+  if (S.phase === "end") {
+    // 끝났는데 10명이 안 될 때: 상위권에 못 든 참가자 전체에서 랜덤으로 채우기
+    Q = keys(G.qualified); pool = keys(J).filter(id => !(G.qualified || {})[id]);
+  } else {
+    const h = H[`r${S.round}`]; if (!h) return;
+    const nx = h.next || {};
+    Q = keys(nx.qualified);
+    pool = nx.end ? keys(J).filter(id => !(nx.qualified || {})[id]) : keys(nx.contenders);
+  }
+  const need = TARGET - Q.length;
+  if (need <= 0) return toast("이미 상위 인원이 다 정해졌어요");
+  if (!pool.length) return toast("뽑을 사람이 없어요");
+  if (!confirm(`${pool.length}명 중 ${Math.min(need, pool.length)}명을 랜덤으로 뽑아서 ${TARGET}명을 채울까요?`)) return;
   const pick = pool.sort(() => Math.random() - .5).slice(0, need);
   const m = {}; [...Q, ...pick].forEach(id => m[id] = true);
   await set(ref(db, P("pub/game")), { contenders: null, qualified: m });
