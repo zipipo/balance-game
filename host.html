@@ -476,6 +476,7 @@ function animBar(el, numEl, from, to, total, ms){
 async function playReveal(instant){
   const h = H[`r${S.round}`]; if (!h) return;
   animating = true; shownRound = S.round;
+  if (!instant) { $("barA").style.height = $("barB").style.height = "0"; $("numA").innerHTML = $("numB").innerHTML = "0<small>명</small>"; }
   const A = h.A || [], B = h.B || [], N = h.N || [], total = A.length + B.length + N.length;
   const q = h.q || {};
   $("rq").innerHTML = `${q.t} <span class="en" style="font-size:2.4vh">${q.te || ""}</span>`;
@@ -496,6 +497,7 @@ async function playReveal(instant){
     await animBar($("barB"), $("numB"), B.length, B.length, total, 1);
   } else {
     $("barA").style.height = $("barB").style.height = "0";
+    $("numA").innerHTML = $("numB").innerHTML = "0<small>명</small>";
     await sleep(250);
     drumroll(1.7);
     await Promise.all([animBar($("barA"), $("numA"), 0, lo, total, 1700), animBar($("barB"), $("numB"), 0, lo, total, 1700)]);
