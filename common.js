@@ -13,7 +13,8 @@ export const ADVISORS = ["김요한","김충섭","김훈","박별리","박종찬
 export const ROOM = (new URLSearchParams(location.search).get("room") || "live").replace(/[^\w-]/g, "");
 export const P = path => `rooms/${ROOM}/${path}`;
 
-export const TARGET = 10;          // 상위 몇 명까지
+// 상위 몇 명까지 (테스트할 땐 host.html?room=test&target=1 처럼 줄일 수 있음)
+export const TARGET = Number(new URLSearchParams(location.search).get("target")) || 10;
 export const VOTE_SECONDS = 20;    // 라운드 투표 시간
 
 // 앞 8개를 기본으로 쓰고, 뒤 4개는 예비
@@ -41,4 +42,5 @@ export function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, ""); }
 let NAMES = {};
 export function setNames(m){ NAMES = m || {}; }
 export function nameOf(id){ const j = NAMES[id]; return (j && j.n) || id; }
+export function advOf(id){ const j = NAMES[id]; return (j && j.p) || ""; }
 export function keys(o) { return o ? Object.keys(o) : []; }

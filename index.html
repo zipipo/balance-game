@@ -15,6 +15,7 @@
   input:focus,select:focus{outline:none;border-color:var(--lav)}
   .btn{width:100%;padding:16px;border-radius:14px;font-size:18px;background:var(--ink);color:#fff}
   .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line)}
+  header,.big,.q,.choice,.grid button,.round,.badge,.btn,.timer{font-family:"Jua","OmyuPretty",sans-serif}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .grid button{padding:12px 6px;border-radius:12px;background:#fff;border:2px solid var(--line);font-family:inherit;font-size:17px;color:var(--ink);word-break:keep-all}
   .grid button.on{border-color:var(--ink);background:var(--yel)}
@@ -90,16 +91,16 @@ async function claim(id, token){
   try { await set(ref(db, P(`checks/${id}/${Date.now()}${Math.floor(Math.random()*1e6)}`)), token); return true; } catch(e) { return false; }
 }
 
-async function login(id, token, silent, name){
+async function login(id, token, silent, name, adv){
   const ok = await claim(id, token);
   if (!ok) {
     if (silent) { localStorage.removeItem("bg_me_"+ROOM); showLogin(); }
     else $("err").innerHTML = "이미 다른 폰에서 입장한 이름이에요. 진행자에게 말해 주세요.<br><span class=en>Already joined on another phone. Please tell the host.</span>";
     return;
   }
-  me = { id, token, name };
+  me = { id, token, name, adv };
   localStorage.setItem("bg_me_"+ROOM, JSON.stringify(me));
-  await set(ref(db, P(`pub/joined/${id}`)), { n: name, t: Date.now() });
+  await set(ref(db, P(`pub/joined/${id}`)), { n: name, p: adv || "", t: Date.now() });
   startGame();
 }
 
@@ -108,7 +109,7 @@ $("go").onclick = async () => {
   $("go").disabled = true; $("go").textContent = "...";
   try {
     const saved = JSON.parse(localStorage.getItem("bg_me_"+ROOM) || "null");
-    await login(pickId, saved && saved.id === pickId ? saved.token : newToken(), false, pickName);
+    await login(pickId, saved && saved.id === pickId ? saved.token : newToken(), false, pickName, pickAdv);
   } finally { $("go").disabled = false; $("go").textContent = "입장 Join"; }
 };
 
@@ -155,11 +156,11 @@ function render(){
   }
   if (S.phase === "end") {
     v.innerHTML = st === "qualified"
-      ? `<p class="big">🎉 상위 ${keys(G.qualified).length}명!<br><span class="en">You made the Top ${keys(G.qualified).length}!</span></p><p class="msg">경품 받으러 앞으로 와 주세요.<br><span class="en">Come to the front for your prize.</span></p>`
+      ? `<p class="big">상위 ${keys(G.qualified).length}명!<br><span class="en">You made the Top ${keys(G.qualified).length}!</span></p><p class="msg">경품 받으러 앞으로 와 주세요.<br><span class="en">Come to the front for your prize.</span></p>`
       : `<p class="big">게임 끝!<br><span class="en">Game over!</span></p><p class="msg">이어서 추첨도 있어요!<br><span class="en">The lucky draw is next!</span></p>`;
     return;
   }
-  if (st === "qualified") { v.innerHTML = `<p class="big"><span class="badge gold">상위 10명 확정 · Top 10</span></p><p class="msg">남은 자리 경쟁을 구경해 주세요 😎<br><span class="en">Sit back and enjoy the rest.</span></p>`; return; }
+  if (st === "qualified") { v.innerHTML = `<p class="big"><span class="badge gold">상위 10명 확정 · Top 10</span></p><p class="msg">남은 자리 경쟁을 구경해 주세요 <br><span class="en">Sit back and enjoy the rest.</span></p>`; return; }
   if (st === "out") { v.innerHTML = `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">아쉽지만 여기까지!<br><span class="en">That's it for you. Enjoy the show!</span></p>`; return; }
 
   const label = S.mode === "playoff" ? `${S.round}라운드 · 패자부활전 <span class="en">Revival</span>` : `${S.round}라운드 <span class="en">Round ${S.round}</span>`;
@@ -179,7 +180,7 @@ function render(){
   const mine = myVote ? `내 선택 <span class="en">My pick</span>: <b>${side[myVote]}</b>` : `<b>미투표 · No vote</b>`;
   const h = H[`r${S.round}`];
   if (S.phase === "countdown" || !S.shown || !h) {
-    v.innerHTML = `<p class="big">마감! <span class="en">Time\'s up!</span></p><p class="msg">${mine}<br>앞 화면을 봐 주세요 👀<br><span class="en">Watch the screen</span></p>`; return;
+    v.innerHTML = `<p class="big">마감! <span class="en">Time\'s up!</span></p><p class="msg">${mine}<br>앞 화면을 봐 주세요 <br><span class="en">Watch the screen</span></p>`; return;
   }
   const live = (h.survivors || []).includes(me.id);
   v.innerHTML = live
@@ -189,7 +190,7 @@ function render(){
 
 // 저장된 로그인 있으면 자동 입장
 const saved = JSON.parse(localStorage.getItem("bg_me_"+ROOM) || "null");
-if (saved && saved.id && saved.token) login(saved.id, saved.token, true, saved.name); else showLogin();
+if (saved && saved.id && saved.token) login(saved.id, saved.token, true, saved.name, saved.adv); else showLogin();
 </script>
 </body>
 </html>

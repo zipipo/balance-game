@@ -1,4 +1,5 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Patrick+Hand&display=swap");
 @font-face{font-family:"OmyuPretty";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/omyu_pretty.woff2") format("woff2");font-weight:normal;font-display:swap}
 :root{
   --ink:#16161a; --sub:#3a3a44; --bg:#ffffff; --line:#e4e4ea;
@@ -10,4 +11,6 @@ html,body{height:100%}
 body{font-family:"OmyuPretty",Pretendard,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
 button{font-family:inherit;cursor:pointer;border:0}
 .hidden{display:none !important}
-.en{font-family:Pretendard,system-ui,sans-serif;font-weight:600;opacity:.82}
+/* 파트별 글씨체: 제목·문제·숫자·이름은 Jua(둥글고 멀리서도 잘 보임), 설명은 오뮤 다예쁨체, 영어는 손글씨 Patrick Hand */
+.disp{font-family:"Jua","OmyuPretty",Pretendard,sans-serif}
+.en{font-family:"Patrick Hand","OmyuPretty",sans-serif;font-weight:normal;opacity:.85;letter-spacing:.01em}

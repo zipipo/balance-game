@@ -91,8 +91,17 @@
   #end{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh}
   #end h1{font-size:10vh;font-weight:900}
   #winners{display:grid;grid-template-columns:repeat(5,1fr);gap:2vh;width:90%}
-  #winners div{display:flex;align-items:center;justify-content:center;background:var(--yel);border-radius:2vh;padding:2.4vh 1vh;text-align:center;font-size:4.6vh;animation:shine 1s ease-out both}
+  #winners div{display:flex;flex-direction:column;gap:.6vh;align-items:center;justify-content:center;background:var(--yel);border-radius:2vh;padding:2.4vh 1vh;text-align:center;font-size:4.6vh;animation:shine 1s ease-out both}
 
+  #winners small{font-size:2.6vh;opacity:.8}
+  #picker{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:40;display:flex;align-items:center;justify-content:center}
+  #picker .pk{background:#fff;border-radius:2vh;padding:2vh;width:70vw;max-height:84vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:1vh}
+  #picker button{text-align:left;padding:1.4vh 1.6vh;border-radius:1.2vh;background:#f4f2fb;font-family:inherit;font-size:2.6vh;color:var(--ink)}
+  #picker button small{display:block;font-size:1.9vh;margin-top:.4vh}
+  #picker button.used{opacity:.4} #picker button.cur{outline:.4vh solid var(--ink)}
+  #picker button.close{grid-column:1/-1;text-align:center;background:var(--ink);color:#fff}
+  .title,#lobby h1,#qText,.card .v,.card .k,.vs,#clock,#voted,.num,.lab,.nm,#verdict,#summary,#end h1,#winners span,.count,#count,#rq,.chip,.pill,.meta,#noneRow{font-family:"Jua","OmyuPretty",sans-serif}
+  #lobby li,#lobby .howto,#ctl{font-family:"OmyuPretty",Pretendard,sans-serif}
   /* 진행자 버튼 */
   #ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:1vh;justify-content:center;padding:1.4vh;background:#fafafa;border-top:1px solid var(--line);z-index:30}
   #ctl button{padding:1.2vh 2.2vh;border-radius:1.2vh;font-size:2vh;background:#ececf2;color:var(--ink)}
@@ -165,7 +174,7 @@
   </section>
 
   <section id="end" class="hidden">
-    <h1>🎉 상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
+    <h1>상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
     <div id="winners"></div>
   </section>
 </div>
@@ -173,6 +182,7 @@
 <div class="walker" id="w1"></div>
 <div class="walker" id="w2"></div>
 <div id="count" class="hidden"></div>
+<div id="picker" class="hidden"></div>
 <div id="verdict"></div>
 
 <div id="ctl">
@@ -184,11 +194,11 @@
   <button id="bReplay">결과 다시 보기</button>
   <button id="bMusic">음악 끄기</button>
   <button id="bReset">처음부터</button>
-  <span class="info" id="info">H 키: 버튼 숨기기</span>
+  <span class="info" id="snd"></span><span class="info" id="info">H 키: 버튼 숨기기</span>
 </div>
 
 <script type="module">
-import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, setNames, keys } from "./common.js";
+import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, advOf, setNames, keys } from "./common.js";
 
 const $ = id => document.getElementById(id);
 let S = {}, G = {}, J = {}, V = {}, H = {}, votePath = null, animating = false, shownRound = null, closing = false;
@@ -249,17 +259,20 @@ function dudung(){ tone(196, .25, 0, "square", .18); tone(196, .25, .28, "square
 let music = null, musicOn = true;
 function startMusic(){
   if (music || !musicOn) return;
-  const a = ac(), bass = [110, 110, 130.8, 110, 82.4, 110, 87.3, 82.4];
+  const a = ac();
+  // 노트북 스피커에서도 들리게 중음역 아르페지오 + 똑딱 소리
+  const arp = [220, 261.6, 329.6, 261.6, 220, 261.6, 349.2, 329.6];
   let step = 0, next = a.currentTime + .05;
   const tick = () => {
     const left = S.deadline ? (S.deadline - Date.now()) / 1000 : 99;
-    const spb = left <= 5 ? .14 : .2;          // 마지막 5초는 더 빠르게
+    const hurry = left <= 5;
+    const spb = hurry ? .13 : .19;
     while (next < a.currentTime + .25) {
-      const f = bass[step % 8] * (left <= 5 ? 2 : 1);
-      tone(f, spb * .9, next - a.currentTime, "sawtooth", .07);
-      if (step % 2) hat(next - a.currentTime, .05);
-      if (step % 8 === 0) tone(55, .35, next - a.currentTime, "sine", .35);
-      if (left <= 5 && step % 2 === 0) tone(1320, .05, next - a.currentTime, "square", .04);
+      const t0 = next - a.currentTime, f = arp[step % 8] * (hurry ? 2 : 1);
+      tone(f, spb * .8, t0, "square", .06);
+      tone(f / 2, spb * .9, t0, "triangle", .12);
+      if (step % 2 === 0) tone(hurry ? 2000 : 1500, .03, t0, "square", .05);
+      if (step % 4 === 0) tone(80, .18, t0, "sine", .4);
       next += spb; step++;
     }
   };
@@ -316,9 +329,15 @@ function render(){
   if (ph === "end") {
     show("end");
     const w = keys(G.qualified);
-    $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s">${nameOf(id)}</div>`).join("");
+    $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s"><span>${nameOf(id)}</span>${advOf(id) ? `<small>${advOf(id)} 교수님</small>` : ""}</div>`).join("");
   }
 }
+
+// 소리 상태 표시
+setInterval(() => {
+  const st = AC ? AC.state : "none";
+  $("snd").textContent = st !== "running" ? "소리 꺼짐: 화면 한 번 클릭" : music ? "음악 재생 중" : "소리 켜짐";
+}, 500);
 
 // 타이머
 setInterval(() => {
@@ -362,7 +381,7 @@ async function closeVote(){
   for (const n of [3, 2, 1]) {
     ov.textContent = n; ov.classList.remove("pop"); void ov.offsetWidth; ov.classList.add("pop");
     tone(n === 1 ? 660 : 440, .3, 0, "sine", .3);
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 800));
   }
   ov.classList.add("hidden");
   await judge();
@@ -374,7 +393,12 @@ async function judge(){
   const C = contenders(), mode = S.mode || "normal";
   const A = C.filter(id => V[id] === "A"), B = C.filter(id => V[id] === "B"), N = C.filter(id => !V[id]);
   let win, surv;
-  if (!A.length && !B.length) { win = "void"; surv = C; }
+  if (!A.length && !B.length) {
+    // 아무도 안 눌렀으면 탈락 없이 같은 문제로 다시 투표
+    await update(ref(db, P("pub/state")), { phase: "voting", deadline: Date.now() + VOTE_SECONDS * 1000 });
+    alert("아무도 투표하지 않아서 같은 문제로 다시 투표해요.");
+    return;
+  }
   else if (A.length === B.length) { win = "tie"; surv = [...A, ...B]; }
   else { win = A.length > B.length ? "A" : "B"; surv = win === "A" ? A : B; }
 
@@ -440,18 +464,18 @@ async function playReveal(instant){
     await animBar($("barB"), $("numB"), B.length, B.length, total, 1);
   } else {
     $("barA").style.height = $("barB").style.height = "0";
-    await sleep(500);
-    drumroll(2.8);
-    await Promise.all([animBar($("barA"), $("numA"), 0, lo, total, 2800), animBar($("barB"), $("numB"), 0, lo, total, 2800)]);
-    await sleep(700);
+    await sleep(250);
+    drumroll(1.7);
+    await Promise.all([animBar($("barA"), $("numA"), 0, lo, total, 1700), animBar($("barB"), $("numB"), 0, lo, total, 1700)]);
+    await sleep(350);
     dudung();
-    await Promise.all([animBar($("barA"), $("numA"), lo, A.length, total, 1100), animBar($("barB"), $("numB"), lo, B.length, total, 1100)]);
-    await sleep(300);
+    await Promise.all([animBar($("barA"), $("numA"), lo, A.length, total, 800), animBar($("barB"), $("numB"), lo, B.length, total, 800)]);
+    await sleep(150);
   }
   const vd = { A: "빨강 생존! <span class='en'>RED survives</span>", B: "파랑 생존! <span class='en'>BLUE survives</span>", tie: "동점! 전원 생존 <span class='en'>Tie, all survive</span>", void: "투표 없음 <span class='en'>No votes</span>" }[h.win];
   if (h.win === "A") { $("colB").classList.add("lose"); $("colA").classList.add("win"); }
   if (h.win === "B") { $("colA").classList.add("lose"); $("colB").classList.add("win"); }
-  if (!instant) { $("verdict").innerHTML = vd; $("verdict").classList.add("show"); fanfare(); await sleep(1600); $("verdict").classList.remove("show"); }
+  if (!instant) { $("verdict").innerHTML = vd; $("verdict").classList.add("show"); fanfare(); await sleep(1100); $("verdict").classList.remove("show"); }
   ["namesA", "namesB", "noneRow"].forEach(c => $(c).classList.add("show"));
 
   const nx = h.next || {}, qn = keys(nx.qualified).length, cn = keys(nx.contenders).length;
@@ -478,11 +502,20 @@ $("bNext").onclick = async () => {
   await startRound(S.round + 1, qi, { state: { mode: nx.mode, slots: nx.slots } });
 };
 
-$("bSkip").onclick = async () => {
-  const qi = nextQuestion(); if (qi < 0) return alert("남은 문제가 없어요.");
+// 문제 바꾸기: 전체 목록에서 고르기 (이미 쓴 문제는 흐리게)
+$("bSkip").onclick = () => {
+  const used = new Set(Object.values(H).map(h => h.qi));
+  $("picker").innerHTML = `<div class="pk">${QUESTIONS.map((q, i) => `<button data-i="${i}" class="${used.has(i) ? "used" : ""} ${i === S.qi ? "cur" : ""}">${i + 1}. ${q.t}<small>${q.a} vs ${q.b}</small></button>`).join("")}<button class="close">닫기</button></div>`;
+  $("picker").classList.remove("hidden");
+};
+$("picker").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  $("picker").classList.add("hidden");
+  if (b.classList.contains("close")) return;
+  const qi = Number(b.dataset.i);
   await remove(ref(db, P(`pub/votes/r${S.round}`)));
   await update(ref(db, P("pub/state")), { qi, q: QUESTIONS[qi], deadline: Date.now() + VOTE_SECONDS * 1000 });
-};
+});
 $("bCustom").onclick = async () => {
   const t = prompt("질문"); if (!t) return;
   const a = prompt("A 선택지"); if (!a) return;
