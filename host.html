@@ -194,13 +194,14 @@
   <button id="bSkip">문제 바꾸기</button>
   <button id="bCustom">직접 문제 입력</button>
   <button id="bReplay">결과 다시 보기</button>
+  <button id="bPinball">핀볼 명단 복사</button>
   <button id="bMusic">음악 끄기</button>
   <button id="bReset">처음부터</button>
   <span class="info" id="snd"></span><span class="info" id="info">H 키: 버튼 숨기기</span>
 </div>
 
 <script type="module">
-import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, advOf, nameHtml, setNames, keys } from "./common.js";
+import { db, ref, onValue, set, get, update, remove, ADVISORS, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, advOf, nameHtml, setNames, keys } from "./common.js";
 
 const $ = id => document.getElementById(id);
 let S = {}, G = {}, J = {}, V = {}, H = {}, votePath = null, animating = false, shownRound = null, closing = false;
@@ -324,6 +325,7 @@ function render(){
   $("bCustom").classList.toggle("hidden", ph !== "voting");
   $("bNext").classList.toggle("hidden", ph !== "reveal");
   $("bReplay").classList.toggle("hidden", ph !== "reveal");
+  $("bPinball").classList.toggle("hidden", ph !== "end");
 
   const qual = keys(G.qualified).length;
   const modeTag = S.mode === "playoff" ? `<span class="pill play">패자부활전 Revival · 남은 자리 ${S.slots}</span>` : "";
@@ -522,6 +524,17 @@ async function playReveal(instant){
   if (!S.shown) await update(ref(db, P("pub/state")), { shown: true });
   animating = false;
 }
+// 마블 룰렛에 붙여 넣을 명단: 전체 참석자에서 밸런스게임 상위 10명과 진행자 제외
+$("bPinball").onclick = async () => {
+  const win = G.qualified || {}, out = [];
+  for (const p of ADVISORS) {
+    const s = await get(ref(db, `advisors/${p}`));
+    Object.entries(s.val() || {}).forEach(([id, r]) => { if (!win[id] && r.n !== "한유진") out.push(r.d); });
+  }
+  const text = out.join(", ");
+  try { await navigator.clipboard.writeText(text); alert(`${out.length}명 복사됨. 마블 룰렛 입력 칸에 붙여 넣으세요.`); }
+  catch (e) { prompt("아래 명단을 복사하세요", text); }
+};
 $("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) { stopMusic(); stopLobby(); } else render(); };
 $("bReplay").onclick = () => { shownRound = null; playReveal(false); };
 
