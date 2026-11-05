@@ -45,7 +45,7 @@
   .card.A{background:var(--a)} .card.B{background:var(--b)}
   .card .k{font-size:4.6vh;margin-bottom:1.5vh}
   .card .k .en{font-size:3.2vh}
-  .card .v{font-size:8.5vh;line-height:1.25;word-break:keep-all}
+  .card .v{font-size:var(--cardf,8.5vh);line-height:1.25;word-break:keep-all}
   .card .ve{font-size:3.8vh;margin-top:1.2vh}
   .vs{align-self:center;font-size:5vh;font-weight:900}
   #voteInfo{display:flex;gap:4vw;align-items:center;font-size:4.6vh;font-weight:800}
@@ -346,6 +346,9 @@ function render(){
     show("voting");
     const q = qOf(); $("qText").textContent = q.t; $("qa").textContent = q.a; $("qb").textContent = q.b;
     $("qTextE").textContent = q.te || ""; $("qae").textContent = q.ae || ""; $("qbe").textContent = q.be || "";
+    // 선택지가 길면 글씨를 줄여서 카드 안에 들어가게
+    const L = Math.max((q.a || "").length, (q.b || "").length);
+    document.documentElement.style.setProperty("--cardf", L > 22 ? "5.2vh" : L > 14 ? "6.4vh" : "8.5vh");
     const c = contenders(), n = c.filter(id => V[id]).length;
     $("voted").innerHTML = `투표 ${n} / ${c.length}명 <span class="en">voted</span>`;
   }
