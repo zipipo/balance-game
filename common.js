@@ -29,7 +29,6 @@ export const QUESTIONS = [
   { t: "학회 발표에서 더 무서운 것", te: "Scarier at a conference talk", a: "영어 질문 폭탄", ae: "A flood of questions in English", b: "아무도 질문 안 함", be: "Nobody asks anything" },
   { t: "사수 선배", te: "Your senior mentor", a: "천재인데 불친절함", ae: "A genius but unfriendly", b: "친절한데 자주 틀림", be: "Kind but often wrong" },
   { t: "주말 vs 평일", te: "Weekend vs weekdays", a: "평일 5시 퇴근, 토요일도 출근", ae: "Leave at 5 PM, but work Saturdays too", b: "주말 다 쉬고 평일 밤 9시 퇴근", be: "Weekends off, leave at 9 PM on weekdays" },
-  { t: "더 듣고 싶은 말", te: "The words you would rather hear", a: "교수님: \"이번 데이터 좋네\"", ae: "Advisor: \"Great data this time\"", b: "후배: \"선배 덕분에 살았어요\"", be: "Junior: \"You saved me\"" },
   { t: "더 끔찍한 아침", te: "The worse morning", a: "-80℃ 냉동고 고장", ae: "The -80℃ freezer broke down", b: "인큐베이터 전체 오염", be: "The whole incubator is contaminated" },
   // 예비
   { t: "장비 예약이 이것밖에 없다", te: "The only slot left to book the equipment", a: "새벽 6시", ae: "6 AM", b: "밤 11시", be: "11 PM" },
