@@ -29,8 +29,8 @@
         }
       }
     },
-    "roster": {
-      "$h": {
+    "advisors": {
+      "$p": {
         ".read": true,
         ".write": false
       }

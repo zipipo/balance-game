@@ -37,16 +37,7 @@ export const QUESTIONS = [
 export const SIDE = { A: { ko: "빨강", en: "RED" }, B: { ko: "파랑", en: "BLUE" } };
 
 export function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, ""); }
-// 명단은 저장소에 두지 않고 Firebase roster/<이름 해시>에만 있음
-export async function hashName(name, adv){
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("bk21:" + norm(name) + "|" + norm(adv)));
-  return [...new Uint8Array(buf)].slice(0, 12).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-// 이름 + 지도교수님이 둘 다 맞아야 찾아짐
-export async function lookup(name, adv){
-  const s = await get(ref(db, `roster/${await hashName(name, adv)}`));
-  return s.exists() ? s.val() : null;
-}
+// 명단은 저장소에 두지 않고 Firebase advisors/<지도교수님>에만 있음
 let NAMES = {};
 export function setNames(m){ NAMES = m || {}; }
 export function nameOf(id){ const j = NAMES[id]; return (j && j.n) || id; }

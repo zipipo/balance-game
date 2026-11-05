@@ -15,6 +15,10 @@
   input:focus,select:focus{outline:none;border-color:var(--lav)}
   .btn{width:100%;padding:16px;border-radius:14px;font-size:18px;background:var(--ink);color:#fff}
   .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .grid button{padding:12px 6px;border-radius:12px;background:#fff;border:2px solid var(--line);font-family:inherit;font-size:17px;color:var(--ink);word-break:keep-all}
+  .grid button.on{border-color:var(--ink);background:var(--yel)}
+  #nmGrid{grid-template-columns:repeat(2,1fr)}
   .err{color:#c2185b;min-height:22px}
   .who{font-size:15px;color:var(--sub)}
   .big{font-size:26px;line-height:1.35;text-align:center;margin-top:24px}
@@ -40,13 +44,13 @@
 <header>다수 편승 밸런스게임<small>Majority Balance Game · 2026-2 BK21 워크숍</small></header>
 <main>
   <!-- 로그인 -->
-  <section id="login" class="hidden" style="display:flex;flex-direction:column;gap:14px">
-    <label for="nm">이름 <span class="en">Name</span></label>
-    <input id="nm" autocomplete="off" placeholder="명단에 적힌 그대로 / as on the list">
-    <label for="adv">지도교수님 <span class="en">Advisor</span></label>
-    <select id="adv"><option value="">골라 주세요 / Select</option></select>
+  <section id="login" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <label>1. 지도교수님 <span class="en">Your advisor</span></label>
+    <div id="advGrid" class="grid"></div>
+    <label id="nmLabel" class="hidden">2. 이름 <span class="en">Your name</span></label>
+    <div id="nmGrid" class="grid"></div>
     <div class="err" id="err"></div>
-    <button class="btn" id="go">입장 Join</button>
+    <button class="btn" id="go" disabled>입장 Join</button>
     <p class="msg" style="font-size:14px">처음 입장한 폰으로만 투표할 수 있어요.<br><span class="en">You can only vote from the first phone you join with.</span></p>
   </section>
   <!-- 게임 -->
@@ -56,14 +60,28 @@
   </section>
 </main>
 <script type="module">
-import { db, ref, onValue, set, QUESTIONS, keys, P, ROOM, lookup, ADVISORS } from "./common.js";
+import { db, ref, onValue, set, get, QUESTIONS, keys, P, ROOM, ADVISORS } from "./common.js";
 
 const $ = id => document.getElementById(id);
 let me = null, pickedId = null;
 let S = {}, G = {}, H = {}, myVote = null, voteRef = null;
 
-["nm", "adv"].forEach(k => $(k).addEventListener("input", () => $("err").textContent = ""));
-$("adv").innerHTML += ADVISORS.map(p => `<option value="${p}">${p} 교수님</option>`).join("");
+let pickAdv = null, pickId = null, pickName = null;
+$("advGrid").innerHTML = ADVISORS.map(p => `<button data-p="${p}">${p}</button>`).join("");
+$("advGrid").querySelectorAll("button").forEach(btn => btn.onclick = async () => {
+  $("advGrid").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn));
+  pickAdv = btn.dataset.p; pickId = null; $("go").disabled = true; $("err").textContent = "";
+  $("nmGrid").innerHTML = "<p class=msg>...</p>"; $("nmLabel").classList.remove("hidden");
+  const s = await get(ref(db, `advisors/${pickAdv}`));
+  if (pickAdv !== btn.dataset.p) return;
+  const list = Object.entries(s.val() || {}).sort((a, b) => a[1].n.localeCompare(b[1].n, "ko"));
+  $("nmGrid").innerHTML = list.map(([id, r]) => `<button data-id="${id}" data-d="${r.d}">${r.n}</button>`).join("");
+  $("nmGrid").querySelectorAll("button").forEach(nb => nb.onclick = () => {
+    $("nmGrid").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === nb));
+    pickId = nb.dataset.id; pickName = nb.dataset.d; $("go").disabled = false; $("err").textContent = "";
+    $("go").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+});
 const newToken = () => [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(36).padStart(2, "0")).join("").slice(0, 20);
 
 async function claim(id, token){
@@ -86,16 +104,11 @@ async function login(id, token, silent, name){
 }
 
 $("go").onclick = async () => {
-  $("err").textContent = "";
-  const name = $("nm").value.trim(), adv = $("adv").value;
-  if (!name) return $("err").innerHTML = "이름을 넣어 주세요.<br><span class=en>Enter your name.</span>";
-  if (!adv) return $("err").innerHTML = "지도교수님을 골라 주세요.<br><span class=en>Select your advisor.</span>";
+  if (!pickId) return;
   $("go").disabled = true; $("go").textContent = "...";
   try {
-    const r = await lookup(name, adv);
-    if (!r) return $("err").innerHTML = "이름이나 지도교수님이 명단과 달라요.<br><span class=en>Name or advisor does not match the list.</span>";
     const saved = JSON.parse(localStorage.getItem("bg_me_"+ROOM) || "null");
-    await login(r.id, saved && saved.id === r.id ? saved.token : newToken(), false, r.n);
+    await login(pickId, saved && saved.id === pickId ? saved.token : newToken(), false, pickName);
   } finally { $("go").disabled = false; $("go").textContent = "입장 Join"; }
 };
 
