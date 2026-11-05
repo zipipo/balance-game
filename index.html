@@ -170,16 +170,16 @@ function render(){
     v.innerHTML = `
       <div class="round">${label}</div>
       <div class="q">${q.t || ""}<div class="en qe">${q.te || ""}</div></div>
-      <button class="choice A ${myVote==="A"?"on":myVote?"dim":""}" id="cA"><span class="tag">빨강 <span class="en">RED</span></span>${q.a || ""}<span class="en ce">${q.ae || ""}</span></button>
+      <button class="choice A ${myVote==="A"?"on":myVote?"dim":""}" id="cA">${q.a || ""}<span class="en ce">${q.ae || ""}</span></button>
       <div class="vsgap">vs</div>
-      <button class="choice B ${myVote==="B"?"on":myVote?"dim":""}" id="cB"><span class="tag">파랑 <span class="en">BLUE</span></span>${q.b || ""}<span class="en ce">${q.be || ""}</span></button>
+      <button class="choice B ${myVote==="B"?"on":myVote?"dim":""}" id="cB">${q.b || ""}<span class="en ce">${q.be || ""}</span></button>
       <div class="timer" id="timer"></div>
       <p class="msg" style="font-size:14px">${myVote ? "투표 완료! 마감 전까지 바꿀 수 있어요.<br><span class=en>Voted! You can change it until time runs out.</span>" : "더 많은 사람이 고를 것 같은 쪽을 누르세요.<br><span class=en>Tap the side you think MORE people will pick.</span>"}</p>`;
     $("cA").onclick = () => vote("A"); $("cB").onclick = () => vote("B");
     renderTimer(); return;
   }
   // countdown / reveal
-  const side = { A: "빨강 RED", B: "파랑 BLUE" };
+  const side = { A: q.a, B: q.b };
   const mine = myVote ? `내 선택 <span class="en">My pick</span>: <b>${side[myVote]}</b>` : `<b>미투표 · No vote</b>`;
   const h = H[`r${S.round}`];
   if (S.phase === "countdown" || !S.shown || !h) {
