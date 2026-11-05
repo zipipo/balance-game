@@ -1,0 +1,39 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        "pins": {
+          "$id": {
+            ".read": false,
+            ".write": "(!data.exists() && newData.isString() && newData.val().matches(/^[a-z0-9]{8,40}$/)) || !newData.exists()"
+          }
+        },
+        "checks": {
+          "$id": {
+            "$k": {
+              ".read": false,
+              ".write": "!data.exists() && newData.val() === root.child('rooms').child($room).child('pins').child($id).val()"
+            }
+          }
+        },
+        "pub": {
+          ".read": true,
+          ".write": true,
+          "votes": {
+            "$r": {
+              "$id": {
+                ".validate": "(newData.val() === 'A' || newData.val() === 'B') && root.child('rooms').child($room).child('pub/state/phase').val() === 'voting' && ('r' + root.child('rooms').child($room).child('pub/state/round').val()) === $r && root.child('rooms').child($room).child('pub/game/contenders').child($id).exists()"
+              }
+            }
+          }
+        }
+      }
+    },
+    "roster": {
+      "$h": {
+        ".read": true,
+        ".write": false
+      }
+    }
+  }
+}

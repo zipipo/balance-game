@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다수 편승 밸런스게임 · 스크린</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body{overflow:hidden;background:#fff}
+  #stage{position:fixed;inset:0;display:flex;flex-direction:column;padding:3vh 4vw 9vh}
+  .top{display:flex;justify-content:space-between;align-items:baseline}
+  .title{font-size:4.6vh;letter-spacing:-.02em}
+  .meta{font-size:3.2vh;font-weight:700;color:var(--sub)}
+  .pill{display:inline-block;padding:.5vh 1.4vh;border-radius:999px;font-size:2.3vh;margin-left:1vh}
+  .pill.play{background:var(--lav)} .pill.n{background:var(--mint)}
+
+  /* 대기 화면 */
+  #lobby{flex:1;display:flex;gap:3vw;align-items:center;margin-top:1vh;min-height:0}
+  #lobby .left{flex:1.2}
+  #lobby h1{font-size:7.6vh;line-height:1.1;letter-spacing:-.03em}
+  #lobby h1 span{background:linear-gradient(transparent 60%,var(--yel) 60%)}
+  #lobby .sub{font-size:3.2vh;margin-top:1vh}
+  #lobby ul{margin-top:2.6vh;list-style:none;display:flex;flex-direction:column;gap:1.1vh}
+  #lobby li{font-size:3.3vh;display:flex;align-items:flex-start}
+  #lobby li .en{font-size:2.3vh;margin-top:.2vh}
+  #lobby li b{display:inline-block;min-width:4.2vh;text-align:center;background:var(--mint);border-radius:1vh;margin-right:1.2vh}
+  #lobby .howto{margin-top:2.4vh;font-size:3.4vh;background:var(--yel);display:inline-block;padding:1vh 1.8vh;border-radius:1.4vh}
+  #lobby .howto .en{font-size:2.4vh}
+  #lobby .right{display:flex;flex-direction:column;align-items:center;gap:2vh}
+  #qr{padding:2vh;background:#fff;border:.4vh solid var(--ink);border-radius:2vh}
+  #qr img,#qr canvas{width:30vh !important;height:30vh !important}
+  .url{font-size:2.8vh;font-weight:700}
+  .count{font-size:5.5vh;font-weight:900}
+  #lobby .right{width:38vw}
+  #joinedChips{display:flex;flex-wrap:wrap;justify-content:center;gap:.6vh;max-height:20vh;overflow:hidden}
+  .chip{cursor:pointer;padding:.4vh 1.1vh;border-radius:999px;background:#f1eefc;font-size:2.1vh;font-weight:700}
+
+  /* 투표 화면 */
+  #voting{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh}
+  #qText{font-size:9.5vh;text-align:center}
+  #qTextE{font-size:4vh;text-align:center;margin-top:-3vh}
+  .cards{display:flex;gap:3vw;width:100%}
+  .card{flex:1;border-radius:3vh;padding:5vh 3vw;min-height:30vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+  .card.A{background:var(--a)} .card.B{background:var(--b)}
+  .card .k{font-size:4.6vh;margin-bottom:1.5vh}
+  .card .k .en{font-size:3.2vh}
+  .card .v{font-size:8.5vh;line-height:1.25;word-break:keep-all}
+  .card .ve{font-size:3.8vh;margin-top:1.2vh}
+  .vs{align-self:center;font-size:5vh;font-weight:900}
+  #voteInfo{display:flex;gap:4vw;align-items:center;font-size:4.6vh;font-weight:800}
+  #clock{font-size:10vh;min-width:12vh;text-align:center}
+  #clock.hurry{color:#d0315d}
+
+  /* 3 2 1 */
+  #count{position:fixed;inset:0;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:40vh;z-index:20}
+  #count.pop{animation:pop .9s ease-out}
+  @keyframes pop{0%{transform:scale(1.6);opacity:0}30%{transform:scale(1);opacity:1}100%{opacity:.85}}
+
+  /* 결과 화면 */
+  #reveal{flex:1;display:flex;flex-direction:column;gap:2vh;margin-top:1.5vh;min-height:0}
+  #rq{font-size:5vh;text-align:center}
+  .cols{flex:1;display:flex;gap:3vw;min-height:0}
+  .col{flex:1;display:flex;flex-direction:column;gap:1.2vh;min-height:0;transition:opacity .6s,filter .6s}
+  .col.lose{opacity:.28;filter:grayscale(1)}
+  .barwrap{height:18vh;display:flex;align-items:flex-end;gap:2vw;border-bottom:.4vh solid var(--ink)}
+  .bar{width:30%;height:0;border-radius:1.6vh 1.6vh 0 0}
+  .col.A .bar{background:var(--a-deep)} .col.B .bar{background:var(--b-deep)}
+  .num{font-size:11vh;line-height:1}
+  .num small{font-size:3vh;margin-left:.6vh}
+  .lab{font-size:4.4vh}
+  .lab .en{font-size:2.6vh;margin-top:.3vh}
+  .lab .side{display:inline-block;padding:0 1.2vh;border-radius:1vh;margin-right:1vh}
+  .col.A .side{background:var(--a)} .col.B .side{background:var(--b)}
+  .names{display:flex;flex-wrap:wrap;gap:.6vh;align-content:flex-start;overflow:hidden;opacity:0;transition:opacity .5s}
+  .names.show{opacity:1}
+  .nm{padding:.4vh 1.1vh;border-radius:1vh;font-size:var(--nm,2.9vh);background:#f3f3f6}
+  .col.A .nm{background:#ffe3ea} .col.B .nm{background:#e2f1ff}
+  .win .nm{animation:shine 1.2s ease-out}
+  @keyframes shine{0%{transform:scale(1.15)}100%{transform:scale(1)}}
+  #noneRow{font-size:2.8vh;font-weight:700;opacity:0;transition:opacity .5s}
+  #noneRow.show{opacity:1}
+  #verdict{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%) scale(.6);opacity:0;background:var(--ink);color:#fff;font-size:10vh;padding:2vh 5vh;border-radius:2.4vh;z-index:10;transition:all .35s cubic-bezier(.2,1.6,.4,1);white-space:nowrap}
+  #verdict .en{font-size:4.4vh;display:block;text-align:center;opacity:.9}
+  #verdict.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  #summary{font-size:4.4vh;text-align:center;opacity:0;transition:opacity .5s}
+  #summary.show{opacity:1}
+  #summary span{background:linear-gradient(transparent 55%,var(--yel) 55%)}
+
+  /* 끝 */
+  #end{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh}
+  #end h1{font-size:10vh;font-weight:900}
+  #winners{display:grid;grid-template-columns:repeat(5,1fr);gap:2vh;width:90%}
+  #winners div{display:flex;align-items:center;justify-content:center;background:var(--yel);border-radius:2vh;padding:2.4vh 1vh;text-align:center;font-size:4.6vh;animation:shine 1s ease-out both}
+
+  /* 진행자 버튼 */
+  #ctl{position:fixed;left:0;right:0;bottom:0;display:flex;gap:1vh;justify-content:center;padding:1.4vh;background:#fafafa;border-top:1px solid var(--line);z-index:30}
+  #ctl button{padding:1.2vh 2.2vh;border-radius:1.2vh;font-size:2vh;background:#ececf2;color:var(--ink)}
+  #ctl button.main{background:var(--ink);color:#fff}
+  #ctl button:disabled{opacity:.35}
+  #ctl .info{align-self:center;font-size:1.8vh;font-weight:700;color:var(--sub);margin-left:2vh}
+  /* 픽셀 캐릭터 */
+  .walker{position:fixed;bottom:.6vh;width:7.5vh;height:7.5vh;z-index:35;pointer-events:none}
+  .walker svg{width:100%;height:100%;image-rendering:pixelated;animation:wob .42s ease-in-out infinite alternate;transform-origin:50% 100%}
+  #w1{animation:walkL 9s linear infinite alternate, face 18s steps(1) infinite}
+  #w2{animation:walkR 11s linear infinite alternate, face 22s steps(1) infinite reverse}
+  #w2 svg{animation-duration:.5s}
+  @keyframes walkL{from{left:1vw}to{left:20vw}}
+  @keyframes walkR{from{left:calc(80vw - 7.5vh)}to{left:calc(99vw - 7.5vh)}}
+  @keyframes face{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+  @keyframes wob{0%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(0) translateY(-.9vh)}100%{transform:rotate(9deg) translateY(0)}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="top"><div class="title">다수 편승 밸런스게임</div><div class="meta" id="meta"></div></div>
+
+  <section id="lobby" class="hidden">
+    <div class="left">
+      <h1>많이 고를 것 같은 쪽에<br><span>올라타세요</span></h1>
+      <div class="sub en">Pick the side you think MORE people will pick</div>
+      <ul>
+        <li><b>1</b><div>더 많은 사람이 고른 쪽이 생존, 적은 쪽은 탈락<div class="en">The majority side survives, the minority is out</div></div></li>
+        <li><b>2</b><div>딱 반반이면 그 라운드는 전원 생존<div class="en">Exact tie: everyone survives that round</div></div></li>
+        <li><b>3</b><div>마감까지 안 누르면 탈락<div class="en">No vote before time runs out = out</div></div></li>
+        <li><b>4</b><div>10명 밑으로 떨어지면 방금 탈락한 사람끼리 패자부활전<div class="en">Below 10 survivors? Those just eliminated get a revival round</div></div></li>
+        <li><b>5</b><div>끝까지 남은 상위 10명은 경품!<div class="en">The last 10 standing win a prize!</div></div></li>
+      </ul>
+      <div class="howto">QR 접속 → 이름 + 지도교수님 → 입장<div class="en">Scan the QR → your name + your advisor → join</div></div>
+    </div>
+    <div class="right">
+      <div id="qr"></div>
+      <div class="url" id="url"></div>
+      <div class="count" id="joinCount"></div>
+      <div id="joinedChips"></div>
+    </div>
+  </section>
+
+  <section id="voting" class="hidden">
+    <div id="qText"></div><div id="qTextE" class="en"></div>
+    <div class="cards">
+      <div class="card A"><div class="k">빨강 <span class="en">RED</span></div><div class="v" id="qa"></div><div class="ve en" id="qae"></div></div>
+      <div class="vs">vs</div>
+      <div class="card B"><div class="k">파랑 <span class="en">BLUE</span></div><div class="v" id="qb"></div><div class="ve en" id="qbe"></div></div>
+    </div>
+    <div id="voteInfo"><div id="voted"></div><div id="clock"></div></div>
+  </section>
+
+  <section id="reveal" class="hidden">
+    <div id="rq"></div>
+    <div class="cols">
+      <div class="col A" id="colA">
+        <div class="barwrap"><div class="num" id="numA">0<small>명</small></div><div class="bar" id="barA"></div></div>
+        <div class="lab"><span class="side">빨강</span><span id="labA"></span><div class="en" id="labAe"></div></div>
+        <div class="names" id="namesA"></div>
+      </div>
+      <div class="col B" id="colB">
+        <div class="barwrap"><div class="num" id="numB">0<small>명</small></div><div class="bar" id="barB"></div></div>
+        <div class="lab"><span class="side">파랑</span><span id="labB"></span><div class="en" id="labBe"></div></div>
+        <div class="names" id="namesB"></div>
+      </div>
+    </div>
+    <div id="noneRow"></div>
+    <div id="summary"></div>
+  </section>
+
+  <section id="end" class="hidden">
+    <h1>🎉 상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
+    <div id="winners"></div>
+  </section>
+</div>
+
+<div class="walker" id="w1"></div>
+<div class="walker" id="w2"></div>
+<div id="count" class="hidden"></div>
+<div id="verdict"></div>
+
+<div id="ctl">
+  <button class="main" id="bStart">게임 시작</button>
+  <button class="main" id="bClose">마감</button>
+  <button class="main" id="bNext">다음 라운드</button>
+  <button id="bSkip">문제 바꾸기</button>
+  <button id="bCustom">직접 문제 입력</button>
+  <button id="bReplay">결과 다시 보기</button>
+  <button id="bMusic">음악 끄기</button>
+  <button id="bReset">처음부터</button>
+  <span class="info" id="info">H 키: 버튼 숨기기</span>
+</div>
+
+<script type="module">
+import { db, ref, onValue, set, update, remove, TOTAL, QUESTIONS, TARGET, VOTE_SECONDS, P, ROOM, nameOf, setNames, keys } from "./common.js";
+
+const $ = id => document.getElementById(id);
+let S = {}, G = {}, J = {}, V = {}, H = {}, votePath = null, animating = false, shownRound = null, closing = false;
+
+// 접속 QR
+const voteUrl = location.href.replace(/host\.html.*$/, "") + (ROOM === "live" ? "" : `?room=${ROOM}`);
+new QRCode($("qr"), { text: voteUrl, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M });
+$("url").textContent = voteUrl.replace(/^https?:\/\//, "");
+
+onValue(ref(db, P("pub/state")), s => {
+  S = s.val() || {};
+  if (!s.exists()) set(ref(db, P("pub/state")), { phase: "lobby", round: 0, qi: -1 });
+  watchVotes(); render();
+});
+onValue(ref(db, P("pub/game")), s => { G = s.val() || {}; render(); });
+onValue(ref(db, P("pub/joined")), s => { J = s.val() || {}; setNames(J); render(); });
+onValue(ref(db, P("pub/hist")), s => { H = s.val() || {}; render(); });
+
+function watchVotes(){
+  const p = P(`pub/votes/r${S.round}`);
+  if (p === votePath) return;
+  votePath = p; V = {};
+  onValue(ref(db, p), s => { if (votePath === p) { V = s.val() || {}; render(); } });
+}
+
+
+// 픽셀 캐릭터 그리기 (k 테두리, w 유리, p 분홍 용액, b 파랑 세포, r 볼터치, y 하이라이트)
+const PAL = { k: "#2b2b33", w: "#ffffff", p: "#ffb7c9", b: "#a9cbff", r: "#ff7f9e", y: "#fff6c2" };
+const FLASK = ["....kkkk....","....kwwk....","....kwyk....","...kwwwwk...","..kwwwwwwk..",".kppppppppk.","kppkppppkppk","kppppppppppk","kprppkkpprpk","kppppppppppk",".kppppppppk.","..kkkkkkkk.."];
+const CELL  = ["...kkkkkk...","..kbbbbbbk..",".kbyybbbbbk.",".kbybbbbbbk.","kbbkbbbbkbbk","kbbbbbbbbbbk","kbrbbkkbbrbk","kbbbbbbbbbbk",".kbbbbbbbbk.","..kkkkkkkk..","..k......k..",".kk......kk."];
+function pixel(map){
+  let r = "";
+  map.forEach((row, y) => [...row].forEach((c, x) => { if (PAL[c]) r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[c]}"/>`; }));
+  return `<svg viewBox="0 0 12 12" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+}
+$("w1").innerHTML = pixel(FLASK); $("w2").innerHTML = pixel(CELL);
+
+// ───────── 소리 ─────────
+let AC;
+function ac(){ AC = AC || new (window.AudioContext || window.webkitAudioContext)(); return AC; }
+function tone(f, d, t0 = 0, type = "sine", g = .25){
+  const a = ac(), o = a.createOscillator(), v = a.createGain();
+  o.type = type; o.frequency.value = f; v.gain.setValueAtTime(g, a.currentTime + t0);
+  v.gain.exponentialRampToValueAtTime(.0001, a.currentTime + t0 + d);
+  o.connect(v).connect(a.destination); o.start(a.currentTime + t0); o.stop(a.currentTime + t0 + d + .02);
+}
+function drumroll(sec){
+  const a = ac(), n = Math.floor(sec * 22);
+  for (let i = 0; i < n; i++) {
+    const buf = a.createBuffer(1, 2200, a.sampleRate), d = buf.getChannelData(0);
+    for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * Math.exp(-j / 300);
+    const s = a.createBufferSource(), g = a.createGain(); s.buffer = buf;
+    g.gain.value = .12 + .25 * (i / n); s.connect(g).connect(a.destination); s.start(a.currentTime + i / 22);
+  }
+}
+function dudung(){ tone(196, .25, 0, "square", .18); tone(196, .25, .28, "square", .18); tone(294, .9, .56, "square", .22); }
+// 투표 중 긴장감 음악 (파일 없이 소리 합성)
+let music = null, musicOn = true;
+function startMusic(){
+  if (music || !musicOn) return;
+  const a = ac(), bass = [110, 110, 130.8, 110, 82.4, 110, 87.3, 82.4];
+  let step = 0, next = a.currentTime + .05;
+  const tick = () => {
+    const left = S.deadline ? (S.deadline - Date.now()) / 1000 : 99;
+    const spb = left <= 5 ? .14 : .2;          // 마지막 5초는 더 빠르게
+    while (next < a.currentTime + .25) {
+      const f = bass[step % 8] * (left <= 5 ? 2 : 1);
+      tone(f, spb * .9, next - a.currentTime, "sawtooth", .07);
+      if (step % 2) hat(next - a.currentTime, .05);
+      if (step % 8 === 0) tone(55, .35, next - a.currentTime, "sine", .35);
+      if (left <= 5 && step % 2 === 0) tone(1320, .05, next - a.currentTime, "square", .04);
+      next += spb; step++;
+    }
+  };
+  music = setInterval(tick, 60); tick();
+}
+function stopMusic(){ if (music) { clearInterval(music); music = null; } }
+function hat(t0, g){
+  const a = ac(), buf = a.createBuffer(1, 800, a.sampleRate), d = buf.getChannelData(0);
+  for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * Math.exp(-j / 120);
+  const s = a.createBufferSource(), v = a.createGain(), hp = a.createBiquadFilter();
+  hp.type = "highpass"; hp.frequency.value = 6000; s.buffer = buf; v.gain.value = g;
+  s.connect(hp).connect(v).connect(a.destination); s.start(a.currentTime + t0);
+}
+function fanfare(){ [523, 659, 784, 1047].forEach((f, i) => tone(f, .35, i * .13, "triangle", .2)); }
+
+// ───────── 화면 ─────────
+function show(id){ ["lobby", "voting", "reveal", "end"].forEach(x => $(x).classList.toggle("hidden", x !== id)); }
+const qOf = () => S.q || QUESTIONS[S.qi] || { t: "", a: "", b: "" };
+const contenders = () => keys(G.contenders);
+
+function render(){
+  const ph = S.phase || "lobby";
+  $("bStart").classList.toggle("hidden", ph !== "lobby");
+  $("bClose").classList.toggle("hidden", ph !== "voting");
+  $("bSkip").classList.toggle("hidden", ph !== "voting");
+  $("bCustom").classList.toggle("hidden", ph !== "voting");
+  $("bNext").classList.toggle("hidden", ph !== "reveal");
+  $("bReplay").classList.toggle("hidden", ph !== "reveal");
+
+  const qual = keys(G.qualified).length;
+  const modeTag = S.mode === "playoff" ? `<span class="pill play">패자부활전 Revival · 남은 자리 ${S.slots}</span>` : "";
+  $("meta").innerHTML = ph === "lobby" || ph === "end" ? "" :
+    `${S.round}라운드 ${modeTag}<span class="pill n">${S.mode === "playoff" ? `확정 ${qual}명 · 도전 ${contenders().length}명` : `생존 ${contenders().length}명`}</span>`;
+
+  if (ph === "lobby") {
+    show("lobby");
+    const ids = keys(J);
+    $("joinCount").textContent = `입장 ${ids.length} / ${TOTAL}명`;
+    $("joinedChips").innerHTML = ids.sort((a, b) => J[a].t - J[b].t).map(id => `<span class="chip" data-id="${id}">${nameOf(id)}</span>`).join("");
+    $("bStart").disabled = ids.length < 2;
+  }
+  if (ph === "voting") startMusic(); else stopMusic();
+  if (ph === "voting" || ph === "countdown") {
+    show("voting");
+    const q = qOf(); $("qText").textContent = q.t; $("qa").textContent = q.a; $("qb").textContent = q.b;
+    $("qTextE").textContent = q.te || ""; $("qae").textContent = q.ae || ""; $("qbe").textContent = q.be || "";
+    const c = contenders(), n = c.filter(id => V[id]).length;
+    $("voted").innerHTML = `투표 ${n} / ${c.length}명 <span class="en">voted</span>`;
+  }
+  if (ph === "reveal") {
+    show("reveal");
+    if (shownRound !== S.round && !animating) playReveal(!!S.shown);
+  }
+  if (ph === "end") {
+    show("end");
+    const w = keys(G.qualified);
+    $("winners").innerHTML = w.map((id, i) => `<div style="animation-delay:${i * .12}s">${nameOf(id)}</div>`).join("");
+  }
+}
+
+// 타이머
+setInterval(() => {
+  if (S.phase !== "voting" || !S.deadline) { $("clock").textContent = ""; return; }
+  const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+  $("clock").textContent = left; $("clock").classList.toggle("hurry", left <= 5);
+
+  if (left === 0) closeVote();
+}, 200);
+
+// ───────── 진행 ─────────
+function nextQuestion(){
+  const used = new Set(Object.values(H).map(h => h.qi));
+  for (let i = 0; i < QUESTIONS.length; i++) if (!used.has(i) && i !== S.qi) return i;
+  return -1;
+}
+
+async function startRound(roundNo, qi, extra = {}){
+  const q = qi >= 0 ? QUESTIONS[qi] : extra.q;
+  await update(ref(db, P("pub/state")), {
+    phase: "voting", round: roundNo, qi, q, shown: false,
+    deadline: Date.now() + VOTE_SECONDS * 1000, ...extra.state
+  });
+}
+
+$("bStart").onclick = async () => {
+  ac();
+  const ids = keys(J);
+  if (!confirm(`입장한 ${ids.length}명으로 시작할까요?`)) return;
+  const c = {}; ids.forEach(id => c[id] = true);
+  await remove(ref(db, P("pub/votes"))); await remove(ref(db, P("pub/hist")));
+  await set(ref(db, P("pub/game")), { contenders: c, qualified: null });
+  await startRound(1, 0, { state: { mode: "normal", slots: TARGET } });
+};
+
+async function closeVote(){
+  if (closing || S.phase !== "voting") return;
+  closing = true; ac();
+  await update(ref(db, P("pub/state")), { phase: "countdown" });
+  const ov = $("count"); ov.classList.remove("hidden");
+  for (const n of [3, 2, 1]) {
+    ov.textContent = n; ov.classList.remove("pop"); void ov.offsetWidth; ov.classList.add("pop");
+    tone(n === 1 ? 660 : 440, .3, 0, "sine", .3);
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  ov.classList.add("hidden");
+  await judge();
+  closing = false;
+}
+$("bClose").onclick = closeVote;
+
+async function judge(){
+  const C = contenders(), mode = S.mode || "normal";
+  const A = C.filter(id => V[id] === "A"), B = C.filter(id => V[id] === "B"), N = C.filter(id => !V[id]);
+  let win, surv;
+  if (!A.length && !B.length) { win = "void"; surv = C; }
+  else if (A.length === B.length) { win = "tie"; surv = [...A, ...B]; }
+  else { win = A.length > B.length ? "A" : "B"; surv = win === "A" ? A : B; }
+
+  let Q = keys(G.qualified), slots = S.slots || TARGET, next = { mode, slots, end: false }, cont = surv;
+  const out = C.filter(id => !surv.includes(id));
+  if (win !== "void") {
+    if (mode === "normal") {
+      if (surv.length === TARGET) { Q = surv; cont = []; next.end = true; }
+      else if (surv.length < TARGET) {
+        Q = surv; slots = TARGET - surv.length;
+        if (out.length <= slots) { Q = [...Q, ...out]; cont = []; next.end = true; }
+        else { cont = out; next = { mode: "playoff", slots, end: false }; }
+      }
+    } else {
+      if (surv.length === slots) { Q = [...Q, ...surv]; cont = []; next.end = true; }
+      else if (surv.length < slots) {
+        Q = [...Q, ...surv]; slots -= surv.length; cont = out;
+        if (cont.length <= slots) { Q = [...Q, ...cont]; cont = []; next.end = true; }
+        next.slots = slots;
+      }
+    }
+  }
+  const toMap = arr => { const m = {}; arr.forEach(id => m[id] = true); return Object.keys(m).length ? m : null; };
+  await set(ref(db, P(`pub/hist/r${S.round}`)), {
+    qi: S.qi, q: qOf(), mode, A, B, N, win, survivors: surv,
+    next: { ...next, contenders: toMap(cont), qualified: toMap(Q) }
+  });
+  await update(ref(db, P("pub/state")), { phase: "reveal", shown: false });
+}
+
+// 결과 연출
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function animBar(el, numEl, from, to, total, ms){
+  return new Promise(res => {
+    const t0 = performance.now();
+    const step = t => {
+      const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3), v = from + (to - from) * e;
+      el.style.height = `${(v / Math.max(total, 1)) * 100}%`;
+      numEl.innerHTML = `${Math.round(v)}<small>명</small>`;
+      k < 1 ? requestAnimationFrame(step) : res();
+    };
+    requestAnimationFrame(step);
+  });
+}
+async function playReveal(instant){
+  const h = H[`r${S.round}`]; if (!h) return;
+  animating = true; shownRound = S.round;
+  const A = h.A || [], B = h.B || [], N = h.N || [], total = A.length + B.length + N.length;
+  const q = h.q || {};
+  $("rq").innerHTML = `${q.t} <span class="en" style="font-size:2.4vh">${q.te || ""}</span>`;
+  $("labA").textContent = q.a; $("labB").textContent = q.b; $("labAe").textContent = q.ae || ""; $("labBe").textContent = q.be || "";
+  ["colA", "colB"].forEach(c => $(c).classList.remove("lose", "win"));
+  ["namesA", "namesB", "noneRow", "summary"].forEach(c => $(c).classList.remove("show"));
+  const big = Math.max(A.length, B.length);
+  document.documentElement.style.setProperty("--nm", big > 40 ? "1.9vh" : big > 28 ? "2.3vh" : big > 16 ? "2.7vh" : "3.4vh");
+  $("namesA").innerHTML = A.map(id => `<span class="nm">${nameOf(id)}</span>`).join("");
+  $("namesB").innerHTML = B.map(id => `<span class="nm">${nameOf(id)}</span>`).join("");
+  $("noneRow").innerHTML = N.length ? `미투표 탈락 <span class="en">No vote</span> ${N.length}명: ${N.map(nameOf).join(", ")}` : "";
+
+  const lo = Math.min(A.length, B.length);
+  if (instant) {
+    await animBar($("barA"), $("numA"), A.length, A.length, total, 1);
+    await animBar($("barB"), $("numB"), B.length, B.length, total, 1);
+  } else {
+    $("barA").style.height = $("barB").style.height = "0";
+    await sleep(500);
+    drumroll(2.8);
+    await Promise.all([animBar($("barA"), $("numA"), 0, lo, total, 2800), animBar($("barB"), $("numB"), 0, lo, total, 2800)]);
+    await sleep(700);
+    dudung();
+    await Promise.all([animBar($("barA"), $("numA"), lo, A.length, total, 1100), animBar($("barB"), $("numB"), lo, B.length, total, 1100)]);
+    await sleep(300);
+  }
+  const vd = { A: "빨강 생존! <span class='en'>RED survives</span>", B: "파랑 생존! <span class='en'>BLUE survives</span>", tie: "동점! 전원 생존 <span class='en'>Tie, all survive</span>", void: "투표 없음 <span class='en'>No votes</span>" }[h.win];
+  if (h.win === "A") { $("colB").classList.add("lose"); $("colA").classList.add("win"); }
+  if (h.win === "B") { $("colA").classList.add("lose"); $("colB").classList.add("win"); }
+  if (!instant) { $("verdict").innerHTML = vd; $("verdict").classList.add("show"); fanfare(); await sleep(1600); $("verdict").classList.remove("show"); }
+  ["namesA", "namesB", "noneRow"].forEach(c => $(c).classList.add("show"));
+
+  const nx = h.next || {}, qn = keys(nx.qualified).length, cn = keys(nx.contenders).length;
+  let sm;
+  if (nx.end) sm = `<span>상위 ${qn}명 확정!</span> <span class="en">Top ${qn} decided!</span>`;
+  else if (nx.mode === "playoff" && h.mode === "normal") sm = `생존 ${qn}명 확정 · <span>남은 ${nx.slots}자리 걸고 방금 탈락한 ${cn}명 패자부활전!</span><div class="en" style="font-size:2.8vh">${qn} safe · revival round: ${cn} players for ${nx.slots} spots</div>`;
+  else if (nx.mode === "playoff") sm = `확정 ${qn}명 · <span>남은 ${nx.slots}자리, ${cn}명 도전</span><div class="en" style="font-size:2.8vh">${nx.slots} spots left, ${cn} players</div>`;
+  else sm = `생존 <span>${cn}명</span> · 탈락 ${total - cn}명 <span class="en">${cn} survive · ${total - cn} out</span>`;
+  $("summary").innerHTML = sm; $("summary").classList.add("show");
+
+  if (!S.shown) await update(ref(db, P("pub/state")), { shown: true });
+  animating = false;
+}
+$("bMusic").onclick = () => { musicOn = !musicOn; $("bMusic").textContent = musicOn ? "음악 끄기" : "음악 켜기"; if (!musicOn) stopMusic(); else if (S.phase === "voting") startMusic(); };
+$("bReplay").onclick = () => { shownRound = null; playReveal(false); };
+
+$("bNext").onclick = async () => {
+  const h = H[`r${S.round}`]; if (!h || animating) return;
+  const nx = h.next;
+  await set(ref(db, P("pub/game")), { contenders: nx.contenders || null, qualified: nx.qualified || null });
+  if (nx.end) { await update(ref(db, P("pub/state")), { phase: "end" }); fanfare(); return; }
+  const qi = nextQuestion();
+  if (qi < 0) return alert("준비한 문제를 다 썼어요. 다음 라운드를 시작한 뒤 '직접 문제 입력'을 눌러 주세요.");
+  await startRound(S.round + 1, qi, { state: { mode: nx.mode, slots: nx.slots } });
+};
+
+$("bSkip").onclick = async () => {
+  const qi = nextQuestion(); if (qi < 0) return alert("남은 문제가 없어요.");
+  await remove(ref(db, P(`pub/votes/r${S.round}`)));
+  await update(ref(db, P("pub/state")), { qi, q: QUESTIONS[qi], deadline: Date.now() + VOTE_SECONDS * 1000 });
+};
+$("bCustom").onclick = async () => {
+  const t = prompt("질문"); if (!t) return;
+  const a = prompt("A 선택지"); if (!a) return;
+  const b = prompt("B 선택지"); if (!b) return;
+  await remove(ref(db, P(`pub/votes/r${S.round}`)));
+  await update(ref(db, P("pub/state")), { qi: -1, q: { t, a, b }, deadline: Date.now() + VOTE_SECONDS * 1000 });
+};
+$("bReset").onclick = async () => {
+  if (!confirm("게임을 처음(대기 화면)으로 되돌릴까요? 입장 기록은 남아요.")) return;
+  await remove(ref(db, P("pub/votes"))); await remove(ref(db, P("pub/hist"))); await remove(ref(db, P("pub/game")));
+  await set(ref(db, P("pub/state")), { phase: "lobby", round: 0, qi: -1 });
+  shownRound = null;
+};
+// 폰을 바꾼 사람: 이름 칩을 누르면 등록을 풀어서 새 폰으로 다시 들어올 수 있게
+$("joinedChips").addEventListener("click", async e => {
+  const id = e.target.dataset && e.target.dataset.id; if (!id) return;
+  if (!confirm(`${nameOf(id)} 입장을 풀까요? 새 폰으로 다시 들어올 수 있게 돼요.`)) return;
+  await remove(ref(db, P(`pins/${id}`))); await remove(ref(db, P(`pub/joined/${id}`)));
+});
+document.addEventListener("click", () => { const a = ac(); if (a.state === "suspended") a.resume(); });
+document.addEventListener("keydown", e => { if (e.key === "h" || e.key === "H") $("ctl").classList.toggle("hidden"); });
+</script>
+</body>
+</html>

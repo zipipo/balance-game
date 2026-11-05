@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>다수 편승 밸런스게임</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body{background:#faf8ff;min-height:100%;display:flex;flex-direction:column}
+  header{padding:18px 20px 6px;font-size:18px}
+  header small{display:block;font-weight:600;font-size:13px;color:var(--sub);margin-top:2px}
+  main{flex:1;padding:16px 20px 28px;display:flex;flex-direction:column;gap:14px}
+  label{font-size:15px}
+  input,select{width:100%;font:inherit;font-size:20px;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--lav)}
+  .btn{width:100%;padding:16px;border-radius:14px;font-size:18px;background:var(--ink);color:#fff}
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line)}
+  .err{color:#c2185b;min-height:22px}
+  .who{font-size:15px;color:var(--sub)}
+  .big{font-size:26px;line-height:1.35;text-align:center;margin-top:24px}
+  .msg{font-size:17px;text-align:center;line-height:1.6;color:var(--sub)}
+  .round{text-align:center;font-size:15px;color:var(--sub)}
+  .q{text-align:center;font-size:20px;line-height:1.4}
+  .choice{width:100%;min-height:120px;border-radius:20px;font-size:22px;line-height:1.35;padding:18px;color:var(--ink);transition:transform .08s}
+  .choice:active{transform:scale(.97)}
+  .choice.A{background:var(--a)} .choice.B{background:var(--b)}
+  .choice .ce{display:block;font-size:15px;margin-top:6px}
+  .q .qe{font-size:15px;margin-top:4px}
+  label .en{font-size:13px}
+  .choice.dim{opacity:.35}
+  .choice.on{outline:5px solid var(--ink)}
+  .tag{display:block;font-size:14px;margin-bottom:6px}
+  .timer{text-align:center;font-size:15px;color:var(--sub)}
+  .adv{display:flex;flex-direction:column;gap:8px}
+  .badge{display:inline-block;padding:6px 14px;border-radius:999px;font-size:15px}
+  .alive{background:var(--mint)} .out{background:#eee;color:#555} .gold{background:var(--yel)}
+</style>
+</head>
+<body>
+<header>다수 편승 밸런스게임<small>Majority Balance Game · 2026-2 BK21 워크숍</small></header>
+<main>
+  <!-- 로그인 -->
+  <section id="login" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <label for="nm">이름 <span class="en">Name</span></label>
+    <input id="nm" autocomplete="off" placeholder="명단에 적힌 그대로 / as on the list">
+    <label for="adv">지도교수님 <span class="en">Advisor</span></label>
+    <select id="adv"><option value="">골라 주세요 / Select</option></select>
+    <div class="err" id="err"></div>
+    <button class="btn" id="go">입장 Join</button>
+    <p class="msg" style="font-size:14px">처음 입장한 폰으로만 투표할 수 있어요.<br><span class="en">You can only vote from the first phone you join with.</span></p>
+  </section>
+  <!-- 게임 -->
+  <section id="game" class="hidden" style="display:flex;flex-direction:column;gap:14px">
+    <div class="who" id="who"></div>
+    <div id="view"></div>
+  </section>
+</main>
+<script type="module">
+import { db, ref, onValue, set, QUESTIONS, keys, P, ROOM, lookup, ADVISORS } from "./common.js";
+
+const $ = id => document.getElementById(id);
+let me = null, pickedId = null;
+let S = {}, G = {}, H = {}, myVote = null, voteRef = null;
+
+["nm", "adv"].forEach(k => $(k).addEventListener("input", () => $("err").textContent = ""));
+$("adv").innerHTML += ADVISORS.map(p => `<option value="${p}">${p} 교수님</option>`).join("");
+const newToken = () => [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(36).padStart(2, "0")).join("").slice(0, 20);
+
+async function claim(id, token){
+  // 처음이면 이 폰을 등록, 이미 등록됐으면 같은 폰인지 확인
+  try { await set(ref(db, P(`pins/${id}`)), token); return true; } catch(e) {}
+  try { await set(ref(db, P(`checks/${id}/${Date.now()}${Math.floor(Math.random()*1e6)}`)), token); return true; } catch(e) { return false; }
+}
+
+async function login(id, token, silent, name){
+  const ok = await claim(id, token);
+  if (!ok) {
+    if (silent) { localStorage.removeItem("bg_me_"+ROOM); showLogin(); }
+    else $("err").innerHTML = "이미 다른 폰에서 입장한 이름이에요. 진행자에게 말해 주세요.<br><span class=en>Already joined on another phone. Please tell the host.</span>";
+    return;
+  }
+  me = { id, token, name };
+  localStorage.setItem("bg_me_"+ROOM, JSON.stringify(me));
+  await set(ref(db, P(`pub/joined/${id}`)), { n: name, t: Date.now() });
+  startGame();
+}
+
+$("go").onclick = async () => {
+  $("err").textContent = "";
+  const name = $("nm").value.trim(), adv = $("adv").value;
+  if (!name) return $("err").innerHTML = "이름을 넣어 주세요.<br><span class=en>Enter your name.</span>";
+  if (!adv) return $("err").innerHTML = "지도교수님을 골라 주세요.<br><span class=en>Select your advisor.</span>";
+  $("go").disabled = true; $("go").textContent = "...";
+  try {
+    const r = await lookup(name, adv);
+    if (!r) return $("err").innerHTML = "이름이나 지도교수님이 명단과 달라요.<br><span class=en>Name or advisor does not match the list.</span>";
+    const saved = JSON.parse(localStorage.getItem("bg_me_"+ROOM) || "null");
+    await login(r.id, saved && saved.id === r.id ? saved.token : newToken(), false, r.n);
+  } finally { $("go").disabled = false; $("go").textContent = "입장 Join"; }
+};
+
+function showLogin(){ $("login").classList.remove("hidden"); $("game").classList.add("hidden"); }
+
+function startGame(){
+  $("login").classList.add("hidden"); $("game").classList.remove("hidden");
+  $("who").textContent = `${me.name} · 입장 완료 Joined`;
+  onValue(ref(db, P("pub/state")), s => { S = s.val() || {}; watchVote(); render(); });
+  onValue(ref(db, P("pub/game")), s => { G = s.val() || {}; render(); });
+  onValue(ref(db, P("pub/hist")), s => { H = s.val() || {}; render(); });
+  setInterval(() => { if (S.phase === "voting") renderTimer(); }, 250);
+}
+
+function watchVote(){
+  const path = P(`pub/votes/r${S.round}/${me.id}`);
+  if (voteRef === path) return;
+  voteRef = path; myVote = null;
+  onValue(ref(db, path), s => { if (voteRef === path) { myVote = s.val(); render(); } });
+}
+
+function status(){
+  if (G.qualified && G.qualified[me.id]) return "qualified";
+  if (G.contenders && G.contenders[me.id]) return "alive";
+  if (S.phase === "lobby" || !S.phase) return "lobby";
+  return "out";
+}
+
+function renderTimer(){
+  const t = $("timer"); if (!t || !S.deadline) return;
+  const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+  t.textContent = left > 0 ? `남은 시간 ${left}초 · ${left}s left` : "마감 중... Closing";
+}
+
+async function vote(c){
+  if (S.phase !== "voting") return;
+  try { await set(ref(db, P(`pub/votes/r${S.round}/${me.id}`)), c); } catch(e) { alert("마감됐어요! Time is up!"); }
+}
+
+function render(){
+  const v = $("view"), st = status(), q = S.q || QUESTIONS[S.qi] || {};
+  if (!S.phase || S.phase === "lobby") {
+    v.innerHTML = `<p class="big">입장 완료!<br><span class="en">You're in!</span></p><p class="msg">앞 화면을 봐 주세요. 곧 첫 문제가 나와요.<br><span class="en">Watch the screen. The first question is coming.</span></p>`; return;
+  }
+  if (S.phase === "end") {
+    v.innerHTML = st === "qualified"
+      ? `<p class="big">🎉 상위 ${keys(G.qualified).length}명!<br><span class="en">You made the Top ${keys(G.qualified).length}!</span></p><p class="msg">경품 받으러 앞으로 와 주세요.<br><span class="en">Come to the front for your prize.</span></p>`
+      : `<p class="big">게임 끝!<br><span class="en">Game over!</span></p><p class="msg">이어서 추첨도 있어요!<br><span class="en">The lucky draw is next!</span></p>`;
+    return;
+  }
+  if (st === "qualified") { v.innerHTML = `<p class="big"><span class="badge gold">상위 10명 확정 · Top 10</span></p><p class="msg">남은 자리 경쟁을 구경해 주세요 😎<br><span class="en">Sit back and enjoy the rest.</span></p>`; return; }
+  if (st === "out") { v.innerHTML = `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">아쉽지만 여기까지!<br><span class="en">That's it for you. Enjoy the show!</span></p>`; return; }
+
+  const label = S.mode === "playoff" ? `${S.round}라운드 · 패자부활전 <span class="en">Revival</span>` : `${S.round}라운드 <span class="en">Round ${S.round}</span>`;
+  if (S.phase === "voting") {
+    v.innerHTML = `
+      <div class="round">${label}</div>
+      <div class="q">${q.t || ""}<div class="en qe">${q.te || ""}</div></div>
+      <button class="choice A ${myVote==="A"?"on":myVote?"dim":""}" id="cA"><span class="tag">빨강 <span class="en">RED</span></span>${q.a || ""}<span class="en ce">${q.ae || ""}</span></button>
+      <button class="choice B ${myVote==="B"?"on":myVote?"dim":""}" id="cB"><span class="tag">파랑 <span class="en">BLUE</span></span>${q.b || ""}<span class="en ce">${q.be || ""}</span></button>
+      <div class="timer" id="timer"></div>
+      <p class="msg" style="font-size:14px">${myVote ? "투표 완료! 마감 전까지 바꿀 수 있어요.<br><span class=en>Voted! You can change it until time runs out.</span>" : "더 많은 사람이 고를 것 같은 쪽을 누르세요.<br><span class=en>Tap the side you think MORE people will pick.</span>"}</p>`;
+    $("cA").onclick = () => vote("A"); $("cB").onclick = () => vote("B");
+    renderTimer(); return;
+  }
+  // countdown / reveal
+  const side = { A: "빨강 RED", B: "파랑 BLUE" };
+  const mine = myVote ? `내 선택 <span class="en">My pick</span>: <b>${side[myVote]}</b>` : `<b>미투표 · No vote</b>`;
+  const h = H[`r${S.round}`];
+  if (S.phase === "countdown" || !S.shown || !h) {
+    v.innerHTML = `<p class="big">마감! <span class="en">Time\'s up!</span></p><p class="msg">${mine}<br>앞 화면을 봐 주세요 👀<br><span class="en">Watch the screen</span></p>`; return;
+  }
+  const live = (h.survivors || []).includes(me.id);
+  v.innerHTML = live
+    ? `<p class="big"><span class="badge alive">생존! Survived</span></p><p class="msg">${mine}<br>다음 라운드를 기다려 주세요.<br><span class="en">Wait for the next round.</span></p>`
+    : `<p class="big"><span class="badge out">탈락 · Out</span></p><p class="msg">${mine}<br>${S.mode === "normal" ? "10명 밑으로 떨어지면 패자부활전이 열려요. 기다려 봐요!<br><span class=en>If fewer than 10 survive, there is a revival round. Stay tuned!</span>" : "아쉽지만 여기까지!<br><span class=en>That\'s it for you.</span>"}</p>`;
+}
+
+// 저장된 로그인 있으면 자동 입장
+const saved = JSON.parse(localStorage.getItem("bg_me_"+ROOM) || "null");
+if (saved && saved.id && saved.token) login(saved.id, saved.token, true, saved.name); else showLogin();
+</script>
+</body>
+</html>

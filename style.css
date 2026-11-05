@@ -1,0 +1,13 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@font-face{font-family:"OmyuPretty";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/omyu_pretty.woff2") format("woff2");font-weight:normal;font-display:swap}
+:root{
+  --ink:#16161a; --sub:#3a3a44; --bg:#ffffff; --line:#e4e4ea;
+  --a:#ffc2c2; --a-deep:#ef7b7b; --a-soft:#ffe6e6; --b:#bcd6ff; --b-deep:#6f9cf0; --b-soft:#e6efff;
+  --mint:#bdeedd; --lav:#d9ccff; --yel:#fff1a8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"OmyuPretty",Pretendard,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:0}
+.hidden{display:none !important}
+.en{font-family:Pretendard,system-ui,sans-serif;font-weight:600;opacity:.82}
