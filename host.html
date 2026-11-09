@@ -141,7 +141,8 @@
   #welcome .t2{font-family:"HA Relay","GT Dotum",sans-serif;font-size:7.5vh}
   #welcome .t2 span{background:linear-gradient(transparent 60%,var(--yel) 60%);padding:0 .2em}
   #welcome .en{font-size:3.4vh;margin-top:1vh}
-  #welcome .t1,#welcome .t2,#welcome .en{animation:wblink 2.8s ease-in-out infinite}
+  #welcome .t3{font-family:"Gowoon","GT Dotum",sans-serif;font-size:4.6vh;margin-top:1vh}
+  #welcome .t1,#welcome .t2,#welcome .t3,#welcome .en{animation:wblink 2.8s ease-in-out infinite}
   @keyframes wblink{0%,100%{opacity:1}50%{opacity:.2}}
   #welcome .w0{font-family:"GT Dotum",sans-serif;font-weight:700;font-size:4vh;color:var(--sub);margin-bottom:2vh}
   #welcome .dots i{font-style:normal;animation:wdot 1.5s infinite}
@@ -245,8 +246,9 @@
 <div id="welcome">
   <div class="w0">경품 추첨 대기 중<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
   <div class="t1">자리에 착석해 주세요</div>
-  <div class="t2"><span>18:30</span>부터 시작합니다</div>
-  <div class="en">Please take your seat · We start at 18:30</div>
+  <div class="t2"><span>18:40 ~ 19:10</span> 경품 추첨 진행</div>
+  <div class="t3">참여를 위해 휴대폰을 지참해 주세요</div>
+  <div class="en">Please take your seat and have your phone ready · Prize draw 18:40–19:10</div>
 </div>
 
 <div id="ctl">
@@ -498,8 +500,11 @@ async function judge(){
   else if (A.length === B.length) { win = "tie"; surv = [...A, ...B]; }
   else { win = A.length > B.length ? "A" : "B"; surv = win === "A" ? A : B; }
 
+  // 교수님(prof_)은 게임에는 참여하지만 상위 인원(경품) 계산에서는 빠짐
+  const isProf = id => String(id).startsWith("prof_");
+  const survAll = surv; surv = surv.filter(id => !isProf(id));
   let Q = keys(G.qualified), slots = S.slots || TARGET, next = { mode, slots, end: false }, cont = surv;
-  const out = C.filter(id => !surv.includes(id) && !N.includes(id)); // 다음 기회는 투표한 사람만 (미투표는 완전 탈락)
+  const out = C.filter(id => !survAll.includes(id) && !N.includes(id) && !isProf(id)); // 다음 기회는 투표한 사람만 (미투표는 완전 탈락)
   if (win !== "void") {
     if (mode === "normal") {
       if (surv.length === TARGET) { Q = surv; cont = []; next.end = true; }
@@ -517,9 +522,10 @@ async function judge(){
       }
     }
   }
+  if (!next.end && next.mode === "normal") cont = [...cont, ...survAll.filter(isProf)];
   const toMap = arr => { const m = {}; arr.forEach(id => m[id] = true); return Object.keys(m).length ? m : null; };
   await set(ref(db, P(`pub/hist/r${S.round}`)), {
-    qi: S.qi, q: qOf(), mode, A, B, N, win, survivors: surv,
+    qi: S.qi, q: qOf(), mode, A, B, N, win, survivors: survAll,
     next: { ...next, contenders: toMap(cont), qualified: toMap(Q) }
   });
   await update(ref(db, P("pub/state")), { phase: "reveal", shown: false });
@@ -607,12 +613,12 @@ $("bDraw").onclick = async () => {
   let Q, pool;
   if (S.phase === "end") {
     // 끝났는데 9명이 안 될 때: 상위권에 못 든 참가자 전체에서 랜덤으로 채우기
-    Q = keys(G.qualified); pool = keys(J).filter(id => !(G.qualified || {})[id]);
+    Q = keys(G.qualified); pool = keys(J).filter(id => !(G.qualified || {})[id] && !String(id).startsWith("prof_"));
   } else {
     const h = H[`r${S.round}`]; if (!h) return;
     const nx = h.next || {};
     Q = keys(nx.qualified);
-    pool = nx.end ? keys(J).filter(id => !(nx.qualified || {})[id]) : keys(nx.contenders);
+    pool = (nx.end ? keys(J).filter(id => !(nx.qualified || {})[id]) : keys(nx.contenders)).filter(id => !String(id).startsWith("prof_"));
   }
   const need = TARGET - Q.length;
   if (need <= 0) return toast("이미 상위 인원이 다 정해졌어요");
