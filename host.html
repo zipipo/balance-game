@@ -166,6 +166,12 @@
   /* 문제·선택지 글씨: 그리운X국한박 고운 */
   @font-face{font-family:"Gowoon";src:url("https://cdn.jsdelivr.net/gh/Wheelman-v2/Corporation_Fonts@main/Griun/GriunXHangeul_Gowoon.woff2") format("woff2");font-display:swap}
   #qText,#rq,.card .v,.lab span:not(.side){font-family:"Gowoon","GT Dotum",sans-serif}
+  /* 마지막 화면 경품 문구: 한 글자씩 다라라락 */
+  #prizeLine{font-family:"Bbangsim","GT Dotum",sans-serif;font-size:8vh;line-height:1.1;color:#14a8a3;min-height:9vh;text-align:center;margin-top:-2vh}
+  #prizeLine i{font-style:normal;display:inline-block;animation:plPop .35s cubic-bezier(.2,1.8,.4,1) both}
+  #prizeLine .en{display:block;font-family:"GT Dotum",sans-serif;font-size:3vh;color:var(--sub);margin-top:.6vh;opacity:0;transition:opacity .6s}
+  #prizeLine .en.on{opacity:1}
+  @keyframes plPop{0%{transform:translateY(60%) scale(.3);opacity:0}100%{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -223,6 +229,7 @@
 
   <section id="end" class="hidden">
     <h1 id="endTitle">상위 9명 <span class="en" style="font-size:4vh">Top 9</span></h1>
+    <div id="prizeLine"></div>
     <div id="winners"></div>
   </section>
 </div>
@@ -668,6 +675,26 @@ function setWelcome(on){ WEL.classList.toggle("hidden", !on); BWEL.textContent =
 BWEL.onclick = () => setWelcome(WEL.classList.contains("hidden"));
 setWelcome(true);
 document.title = "경품 추첨";
+
+// 마지막 화면이 뜰 때 "배민 3만원권 증정!"을 한 글자씩 찍기
+(() => {
+  const END = document.getElementById("end"), PL = document.getElementById("prizeLine");
+  const TXT = "배민 3만원권 증정!";
+  let shown = false, timer = null;
+  const run = () => {
+    clearInterval(timer); PL.innerHTML = ""; let k = 0;
+    const en = document.createElement("span"); en.className = "en"; en.textContent = "Baemin 30,000 won voucher for each winner!";
+    timer = setInterval(() => {
+      if (k < TXT.length) { const c = TXT[k++]; const s = document.createElement("i"); s.innerHTML = c === " " ? "&nbsp;" : c; PL.appendChild(s); }
+      else { clearInterval(timer); PL.appendChild(en); requestAnimationFrame(() => en.classList.add("on")); }
+    }, 140);
+  };
+  new MutationObserver(() => {
+    const vis = !END.classList.contains("hidden");
+    if (vis && !shown) { shown = true; setTimeout(run, 900); }
+    if (!vis) { shown = false; clearInterval(timer); PL.innerHTML = ""; }
+  }).observe(END, { attributes: true, attributeFilter: ["class"] });
+})();
 </script>
 </body>
 </html>
