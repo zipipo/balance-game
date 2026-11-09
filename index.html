@@ -41,6 +41,15 @@
   .adv{display:flex;flex-direction:column;gap:8px}
   .badge{display:inline-block;padding:6px 14px;border-radius:999px;font-size:15px}
   .alive{background:var(--mint)} .out{background:#eee;color:#555} .gold{background:var(--yel)}
+  /* 글씨체: 스크린과 맞춤 (제목 빵심, 문제·선택지 고운, 본문 감탄로드 돋움) */
+  @font-face{font-family:"Bbangsim";src:url("https://cdn.jsdelivr.net/gh/Wheelman-v2/Corporation_Fonts@main/Griun/GriunXHangeul_Bbangsim.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"Gowoon";src:url("https://cdn.jsdelivr.net/gh/Wheelman-v2/Corporation_Fonts@main/Griun/GriunXHangeul_Gowoon.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"GT Dotum";font-weight:400;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Regular.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"GT Dotum";font-weight:700;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Bold.woff2") format("woff2");font-display:swap}
+  body,label,.msg,.who,.round,.timer,.grid button,input,select,.err,.tag{font-family:"GT Dotum",Pretendard,sans-serif}
+  header,.big,.badge,.vsgap,.btn{font-family:"Bbangsim","GT Dotum",sans-serif}
+  .q,.choice{font-family:"Gowoon","GT Dotum",sans-serif}
+  .en,.choice .ce,.q .qe{font-family:"GT Dotum",sans-serif;letter-spacing:0}
 </style>
 </head>
 <body>
