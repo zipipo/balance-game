@@ -56,6 +56,7 @@
   #game{flex:1}
   #view{flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:6vh}
   #view .big{margin-top:0}
+  .grid button.profbtn{grid-column:1/-1;background:#f3eefc}
 </style>
 </head>
 <body>
@@ -85,8 +86,18 @@ let me = null, pickedId = null;
 let S = {}, G = {}, H = {}, myVote = null, voteRef = null;
 
 let pickAdv = null, pickId = null, pickName = null;
-$("advGrid").innerHTML = ADVISORS.map(p => `<button data-p="${p}">${p}</button>`).join("");
+$("advGrid").innerHTML = ADVISORS.map(p => `<button data-p="${p}">${p}</button>`).join("") + `<button data-p="__prof" class="profbtn">교수님이세요? <span class="en">Professor</span></button>`;
 $("advGrid").querySelectorAll("button").forEach(btn => btn.onclick = async () => {
+  if (btn.dataset.p === "__prof") {
+    // 교수님은 성함을 직접 입력 (경품 대상은 아님)
+    $("advGrid").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn));
+    pickAdv = ""; pickId = null; $("go").disabled = true; $("err").textContent = "";
+    $("nmLabel").classList.remove("hidden");
+    $("nmGrid").innerHTML = `<input id="profName" placeholder="성함을 입력해 주세요 · Your name" style="grid-column:1/-1"><p class="msg" style="grid-column:1/-1;font-size:14px">교수님도 함께 참여하실 수 있어요. 경품 대상에서는 빠져요.<br><span class="en">Professors can play too, but are not eligible for prizes.</span></p>`;
+    const inp = $("profName");
+    inp.oninput = () => { const n = inp.value.trim().replace(/[.#$\[\]\/]/g, ""); pickId = n ? "prof_" + n : null; pickName = n ? `${n} 교수님` : null; $("go").disabled = !n; };
+    inp.focus(); return;
+  }
   $("advGrid").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === btn));
   pickAdv = btn.dataset.p; pickId = null; $("go").disabled = true; $("err").textContent = "";
   $("nmGrid").innerHTML = "<p class=msg>...</p>"; $("nmLabel").classList.remove("hidden");
