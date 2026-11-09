@@ -64,7 +64,7 @@
   .col{flex:1;display:flex;flex-direction:column;gap:1.2vh;min-height:0;transition:opacity .6s,filter .6s}
   .col.lose{opacity:.28;filter:grayscale(1)}
   .barwrap{height:var(--barh,18vh);display:flex;align-items:flex-end;gap:2vw;border-bottom:.4vh solid var(--ink)}
-  .bar{width:30%;height:0;border-radius:1.6vh 1.6vh 0 0}
+  .bar{width:42%;height:0;border-radius:1.6vh 1.6vh 0 0}
   .col.A .bar{background:var(--a-deep)} .col.B .bar{background:var(--b-deep)}
   .num{font-size:var(--numf,11vh);line-height:1}
   .num small{font-size:3vh;margin-left:.6vh}
@@ -538,6 +538,7 @@ async function playReveal(instant){
   animating = true; shownRound = S.round;
   if (!instant) { $("barA").style.height = $("barB").style.height = "0"; $("numA").innerHTML = $("numB").innerHTML = "0<small>명</small>"; }
   const A = h.A || [], B = h.B || [], N = h.N || [], total = A.length + B.length + N.length;
+  const scl = Math.max(1, Math.ceil(Math.max(A.length, B.length) * 1.12)); // 많은 쪽이 막대 칸을 거의 다 채우게
   const q = h.q || {};
   $("rq").innerHTML = `${q.t} <span class="en" style="font-size:2.4vh">${q.te || ""}</span>`;
   $("labA").textContent = q.a; $("labB").textContent = q.b; $("labAe").textContent = q.ae || ""; $("labBe").textContent = q.be || "";
@@ -545,7 +546,7 @@ async function playReveal(instant){
   ["namesA", "namesB", "noneRow", "summary"].forEach(c => $(c).classList.remove("show"));
   const big = Math.max(A.length, B.length);
   document.documentElement.style.setProperty("--nm", big > 34 ? "1.5vh" : big > 24 ? "1.8vh" : big > 14 ? "2.1vh" : "2.5vh");
-  document.documentElement.style.setProperty("--barh", big > 24 ? "11vh" : "18vh");
+  document.documentElement.style.setProperty("--barh", big > 24 ? "30vh" : "38vh");
   document.documentElement.style.setProperty("--numf", big > 24 ? "8vh" : "11vh");
   $("namesA").innerHTML = A.map(id => `<span class="nm">${nameHtml(id)}</span>`).join("");
   $("namesB").innerHTML = B.map(id => `<span class="nm">${nameHtml(id)}</span>`).join("");
@@ -553,8 +554,8 @@ async function playReveal(instant){
 
   const lo = Math.min(A.length, B.length);
   if (instant) {
-    await animBar($("barA"), $("numA"), A.length, A.length, total, 1);
-    await animBar($("barB"), $("numB"), B.length, B.length, total, 1);
+    await animBar($("barA"), $("numA"), A.length, A.length, scl, 1);
+    await animBar($("barB"), $("numB"), B.length, B.length, scl, 1);
   } else {
     $("barA").style.height = $("barB").style.height = "0";
     $("numA").innerHTML = $("numB").innerHTML = "0<small>명</small>";
@@ -563,13 +564,13 @@ async function playReveal(instant){
     const slow = Math.min(3, big); let a = 0, b = 0;
     for (let n = 1; n <= slow; n++) {
       const na = Math.min(n, A.length), nb = Math.min(n, B.length);
-      await Promise.all([animBar($("barA"), $("numA"), a, na, total, 260), animBar($("barB"), $("numB"), b, nb, total, 260)]);
+      await Promise.all([animBar($("barA"), $("numA"), a, na, scl, 260), animBar($("barB"), $("numB"), b, nb, scl, 260)]);
       a = na; b = nb; await sleep(n === 1 ? 700 : 520);
     }
     const ma = Math.max(a, Math.min(lo, A.length)), mb = Math.max(b, Math.min(lo, B.length));
-    if (ma > a || mb > b) { drumroll(1.6); await Promise.all([animBar($("barA"), $("numA"), a, ma, total, 1600), animBar($("barB"), $("numB"), b, mb, total, 1600)]); a = ma; b = mb; }
+    if (ma > a || mb > b) { drumroll(1.6); await Promise.all([animBar($("barA"), $("numA"), a, ma, scl, 1600), animBar($("barB"), $("numB"), b, mb, scl, 1600)]); a = ma; b = mb; }
     await sleep(800);
-    if (A.length > a || B.length > b) { dudung(); await Promise.all([animBar($("barA"), $("numA"), a, A.length, total, 1700, 1), animBar($("barB"), $("numB"), b, B.length, total, 1700, 1)]); }
+    if (A.length > a || B.length > b) { dudung(); await Promise.all([animBar($("barA"), $("numA"), a, A.length, scl, 1700, 1), animBar($("barB"), $("numB"), b, B.length, scl, 1700, 1)]); }
     await sleep(250);
   }
   const vd = { A: `${q.a} <span class='en'>${q.ae || ""}</span>`, B: `${q.b} <span class='en'>${q.be || ""}</span>`, tie: "동점! 전원 생존 <span class='en'>Tie, all survive</span>", void: "투표 없음 <span class='en'>No votes</span>" }[h.win];
