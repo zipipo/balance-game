@@ -521,11 +521,11 @@ async function judge(){
 // 결과 연출
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 3500); }
-function animBar(el, numEl, from, to, total, ms){
+function animBar(el, numEl, from, to, total, ms, inout){
   return new Promise(res => {
     const t0 = performance.now();
     const step = t => {
-      const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3), v = from + (to - from) * e;
+      const k = Math.min(1, (t - t0) / ms), e = inout ? (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2) : 1 - Math.pow(1 - k, 3), v = from + (to - from) * e;
       el.style.height = `${(v / Math.max(total, 1)) * 100}%`;
       numEl.innerHTML = `${Math.round(v)}<small>명</small>`;
       k < 1 ? requestAnimationFrame(step) : res();
@@ -544,7 +544,7 @@ async function playReveal(instant){
   ["colA", "colB"].forEach(c => $(c).classList.remove("lose", "win"));
   ["namesA", "namesB", "noneRow", "summary"].forEach(c => $(c).classList.remove("show"));
   const big = Math.max(A.length, B.length);
-  document.documentElement.style.setProperty("--nm", big > 34 ? "1.75vh" : big > 24 ? "2.1vh" : big > 14 ? "2.6vh" : "3.4vh");
+  document.documentElement.style.setProperty("--nm", big > 34 ? "1.5vh" : big > 24 ? "1.8vh" : big > 14 ? "2.1vh" : "2.5vh");
   document.documentElement.style.setProperty("--barh", big > 24 ? "11vh" : "18vh");
   document.documentElement.style.setProperty("--numf", big > 24 ? "8vh" : "11vh");
   $("namesA").innerHTML = A.map(id => `<span class="nm">${nameHtml(id)}</span>`).join("");
@@ -558,13 +558,19 @@ async function playReveal(instant){
   } else {
     $("barA").style.height = $("barB").style.height = "0";
     $("numA").innerHTML = $("numB").innerHTML = "0<small>명</small>";
+    await sleep(400);
+    // 1명, 2명, 3명은 한 칸씩 끊어서 → 같이 올라가는 구간 → 이긴 쪽이 쭉
+    const slow = Math.min(3, big); let a = 0, b = 0;
+    for (let n = 1; n <= slow; n++) {
+      const na = Math.min(n, A.length), nb = Math.min(n, B.length);
+      await Promise.all([animBar($("barA"), $("numA"), a, na, total, 260), animBar($("barB"), $("numB"), b, nb, total, 260)]);
+      a = na; b = nb; await sleep(n === 1 ? 700 : 520);
+    }
+    const ma = Math.max(a, Math.min(lo, A.length)), mb = Math.max(b, Math.min(lo, B.length));
+    if (ma > a || mb > b) { drumroll(1.6); await Promise.all([animBar($("barA"), $("numA"), a, ma, total, 1600), animBar($("barB"), $("numB"), b, mb, total, 1600)]); a = ma; b = mb; }
+    await sleep(800);
+    if (A.length > a || B.length > b) { dudung(); await Promise.all([animBar($("barA"), $("numA"), a, A.length, total, 1700, 1), animBar($("barB"), $("numB"), b, B.length, total, 1700, 1)]); }
     await sleep(250);
-    drumroll(1.7);
-    await Promise.all([animBar($("barA"), $("numA"), 0, lo, total, 1700), animBar($("barB"), $("numB"), 0, lo, total, 1700)]);
-    await sleep(350);
-    dudung();
-    await Promise.all([animBar($("barA"), $("numA"), lo, A.length, total, 800), animBar($("barB"), $("numB"), lo, B.length, total, 800)]);
-    await sleep(150);
   }
   const vd = { A: `${q.a} <span class='en'>${q.ae || ""}</span>`, B: `${q.b} <span class='en'>${q.be || ""}</span>`, tie: "동점! 전원 생존 <span class='en'>Tie, all survive</span>", void: "투표 없음 <span class='en'>No votes</span>" }[h.win];
   if (h.win === "A") { $("colB").classList.add("lose"); $("colA").classList.add("win"); }
