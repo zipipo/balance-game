@@ -122,6 +122,19 @@
   @keyframes walkR{from{left:calc(80vw - 7.5vh)}to{left:calc(99vw - 7.5vh)}}
   @keyframes face{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
   @keyframes wob{0%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(0) translateY(-.9vh)}100%{transform:rotate(9deg) translateY(0)}}
+  /* 글씨체: 제목 학교안심 이어달리기, 선택지 학교안심 수수깡, 숫자 네오현대(노트북에 설치돼 있을 때), 본문 감탄로드 돋움 */
+  @font-face{font-family:"HA Relay";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/2510-1@1.0/HakgyoansimYieodalligiL.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"HA Susukkang";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/2508-2@1.0/HakgyoansimSusukkangL.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"GT Dotum";font-weight:400;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Regular.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"GT Dotum";font-weight:700;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Bold.woff2") format("woff2");font-display:swap}
+  @font-face{font-family:"Neo Num";font-weight:900;src:local("NeoHyundai ExtraBlack"),local("NeoHyundai-ExtraBlack"),local("NeoHyundaiExtraBlack"),local("네오현대 ExtraBlack")}
+  body,#ctl,#lobby li,#lobby .howto,.en,.adv,#picker button,.chip,.meta,.lab,.nm,#noneRow,#winners span{font-family:"GT Dotum",Pretendard,sans-serif}
+  .en{letter-spacing:0}
+  .title,#lobby h1,#qText,#end h1,#verdict,#toast{font-family:"HA Relay","GT Dotum",sans-serif}
+  #qText,.title,#lobby h1,#end h1,#verdict{-webkit-text-stroke:.035em currentColor}
+  .card .v,.card .k,#summary,.pill,#rq{font-family:"HA Susukkang","GT Dotum",sans-serif}
+  .card .v{-webkit-text-stroke:.03em currentColor}
+  .vs,#clock,#voted,.num,.count,#count{font-family:"Neo Num","HA Relay","GT Dotum",sans-serif;font-weight:900}
 </style>
 </head>
 <body>
