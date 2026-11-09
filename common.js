@@ -14,7 +14,7 @@ export const ROOM = (new URLSearchParams(location.search).get("room") || "live")
 export const P = path => `rooms/${ROOM}/${path}`;
 
 // 상위 몇 명까지 (테스트할 땐 host.html?room=test&target=1 처럼 줄일 수 있음)
-export const TARGET = Number(new URLSearchParams(location.search).get("target")) || 10;
+export const TARGET = Number(new URLSearchParams(location.search).get("target")) || 9;
 export const VOTE_SECONDS = 20;    // 라운드 투표 시간
 
 // 앞 8개를 기본으로 쓰고, 뒤 4개는 예비
