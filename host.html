@@ -148,6 +148,18 @@
   #welcome .dots i:nth-child(2){animation-delay:.25s}
   #welcome .dots i:nth-child(3){animation-delay:.5s}
   @keyframes wdot{0%,60%,100%{opacity:.15}30%{opacity:1}}
+  /* 규칙 화면 가독성: 한글 규칙 수수깡, 영어 작게, 접속 안내는 QR 위 */
+  #lobby{gap:5vw}
+  #lobby .left{flex:1.5}
+  #lobby h1{font-size:6.8vh;line-height:1.15;letter-spacing:0;white-space:nowrap}
+  #lobby .sub{font-size:2.6vh;margin-top:1.2vh;color:var(--sub)}
+  #lobby ul{margin-top:4.5vh;gap:3.6vh}
+  #lobby li{font-family:"HA Susukkang","GT Dotum",sans-serif;font-size:4vh;line-height:1.2;align-items:center}
+  #lobby li .en{font-family:"GT Dotum",sans-serif;font-size:2vh;color:var(--sub);opacity:.8;margin-top:.5vh}
+  #lobby li b{font-family:"Bbangsim",sans-serif;font-weight:normal;font-size:4.4vh;min-width:6vh;padding:.4vh 0;margin-right:2vh;align-self:flex-start}
+  #lobby .right{display:flex;flex-direction:column;align-items:center}
+  #lobby .right .howto{margin:0 0 2.4vh;font-family:"HA Susukkang","GT Dotum",sans-serif;font-size:3.4vh;text-align:center;background:var(--yel);padding:1.2vh 2.4vh;border-radius:1.4vh}
+  #lobby .right .howto .en{font-family:"GT Dotum",sans-serif;font-size:2vh;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -156,7 +168,7 @@
 
   <section id="lobby" class="hidden">
     <div class="left">
-      <h1>많이 고를 것 같은 쪽에<br><span>올라타세요</span></h1>
+      <h1>많이 고를 것 같은 쪽에 <span>올라타세요</span></h1>
       <div class="sub en">Pick the side you think MORE people will pick</div>
       <ul>
         <li><b>1</b><div>더 많은 사람이 고른 쪽이 생존, 적은 쪽은 탈락<div class="en">The majority side survives, the minority is out</div></div></li>
@@ -165,9 +177,9 @@
         <li><b>4</b><div>9명 밑으로 떨어지면 방금 탈락한 사람끼리 패자부활전<div class="en">Below 9 survivors? Those just eliminated get a revival round</div></div></li>
         <li><b>5</b><div>끝까지 남은 상위 9명은 경품!<div class="en">The last 9 standing win a prize!</div></div></li>
       </ul>
-      <div class="howto">QR 접속 → 지도교수님 → 내 이름 → 입장<div class="en">Scan the QR → your advisor → your name → join</div></div>
     </div>
     <div class="right">
+      <div class="howto">QR 접속 → 지도교수님 → 내 이름 → 입장<div class="en">Scan the QR → your advisor → your name → join</div></div>
       <div id="qr"></div>
       <div class="url" id="url"></div>
       <div class="count" id="joinCount"></div>
