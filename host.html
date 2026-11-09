@@ -136,8 +136,8 @@
         <li><b>1</b><div>더 많은 사람이 고른 쪽이 생존, 적은 쪽은 탈락<div class="en">The majority side survives, the minority is out</div></div></li>
         <li><b>2</b><div>딱 반반이면 그 라운드는 전원 생존<div class="en">Exact tie: everyone survives that round</div></div></li>
         <li><b>3</b><div>마감까지 안 누르면 탈락<div class="en">No vote before time runs out = out</div></div></li>
-        <li><b>4</b><div>10명 밑으로 떨어지면 방금 탈락한 사람끼리 패자부활전<div class="en">Below 10 survivors? Those just eliminated get a revival round</div></div></li>
-        <li><b>5</b><div>끝까지 남은 상위 10명은 경품!<div class="en">The last 10 standing win a prize!</div></div></li>
+        <li><b>4</b><div>9명 밑으로 떨어지면 방금 탈락한 사람끼리 패자부활전<div class="en">Below 9 survivors? Those just eliminated get a revival round</div></div></li>
+        <li><b>5</b><div>끝까지 남은 상위 9명은 경품!<div class="en">The last 9 standing win a prize!</div></div></li>
       </ul>
       <div class="howto">QR 접속 → 지도교수님 → 내 이름 → 입장<div class="en">Scan the QR → your advisor → your name → join</div></div>
     </div>
@@ -178,7 +178,7 @@
   </section>
 
   <section id="end" class="hidden">
-    <h1 id="endTitle">상위 10명 <span class="en" style="font-size:4vh">Top 10</span></h1>
+    <h1 id="endTitle">상위 9명 <span class="en" style="font-size:4vh">Top 9</span></h1>
     <div id="winners"></div>
   </section>
 </div>
@@ -539,7 +539,7 @@ $("bDraw").onclick = async () => {
   if (animating || closing) return;
   let Q, pool;
   if (S.phase === "end") {
-    // 끝났는데 10명이 안 될 때: 상위권에 못 든 참가자 전체에서 랜덤으로 채우기
+    // 끝났는데 9명이 안 될 때: 상위권에 못 든 참가자 전체에서 랜덤으로 채우기
     Q = keys(G.qualified); pool = keys(J).filter(id => !(G.qualified || {})[id]);
   } else {
     const h = H[`r${S.round}`]; if (!h) return;
