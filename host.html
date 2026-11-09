@@ -135,6 +135,14 @@
   .title{font-family:"Bbangsim","HA Relay",sans-serif}
   .card .v,.card .k,#summary,.pill,#rq{font-family:"HA Susukkang","GT Dotum",sans-serif}
   .vs,#clock,#voted,.num,.count,#count{font-family:"Neo Num","HA Relay","GT Dotum",sans-serif;font-weight:900}
+  /* 시작 전 대기 멘트 */
+  #welcome{position:fixed;inset:0;background:#fff;z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3vh;padding-bottom:8vh}
+  #welcome .t1{font-family:"Bbangsim","HA Relay",sans-serif;font-size:12vh;line-height:1.15}
+  #welcome .t2{font-family:"HA Relay","GT Dotum",sans-serif;font-size:7.5vh}
+  #welcome .t2 span{background:linear-gradient(transparent 60%,var(--yel) 60%);padding:0 .2em}
+  #welcome .en{font-size:3.4vh;margin-top:1vh}
+  #welcome .t1,#welcome .t2,#welcome .en{animation:wblink 2.8s ease-in-out infinite}
+  @keyframes wblink{0%,100%{opacity:1}50%{opacity:.2}}
 </style>
 </head>
 <body>
@@ -203,7 +211,14 @@
 <div id="toast"></div>
 <div id="verdict"></div>
 
+<div id="welcome">
+  <div class="t1">자리에 착석해 주세요</div>
+  <div class="t2"><span>18:30</span>부터 시작합니다</div>
+  <div class="en">Please take your seat · We start at 18:30</div>
+</div>
+
 <div id="ctl">
+  <button id="bWelcome" class="main">규칙 화면으로</button>
   <button class="main" id="bStart">게임 시작</button>
   <button class="main" id="bClose">마감</button>
   <button class="main" id="bNext">다음 라운드</button>
@@ -614,6 +629,12 @@ $("joinedChips").addEventListener("click", async e => {
 });
 document.addEventListener("click", () => { const a = ac(); if (a.state === "suspended") a.resume(); render(); });
 document.addEventListener("keydown", e => { if (e.key === "h" || e.key === "H") $("ctl").classList.toggle("hidden"); });
+
+// 시작 전 대기 멘트: 진행자 화면에서만 보이고, 버튼으로 규칙 화면과 오감
+const WEL=document.getElementById("welcome"), BWEL=document.getElementById("bWelcome");
+function setWelcome(on){ WEL.classList.toggle("hidden", !on); BWEL.textContent = on ? "규칙 화면으로" : "대기 멘트 보기"; }
+BWEL.onclick = () => setWelcome(WEL.classList.contains("hidden"));
+setWelcome(true);
 </script>
 </body>
 </html>
