@@ -122,8 +122,8 @@
   @keyframes walkR{from{left:calc(80vw - 7.5vh)}to{left:calc(99vw - 7.5vh)}}
   @keyframes face{0%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
   @keyframes wob{0%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(0) translateY(-.9vh)}100%{transform:rotate(9deg) translateY(0)}}
-  /* 글씨체: 제목 학교안심 이어달리기, 선택지 학교안심 수수깡, 숫자 네오현대(노트북에 설치돼 있을 때), 본문 감탄로드 돋움 */
-  @font-face{font-family:"HA Relay";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/2510-1@1.0/HakgyoansimYieodalligiL.woff2") format("woff2");font-display:swap}
+  /* 글씨체: 제목 그리운X국한박 빵심, 선택지 학교안심 수수깡, 숫자 네오현대(노트북에 설치돼 있을 때), 본문 감탄로드 돋움 */
+  @font-face{font-family:"HA Relay";src:url("https://cdn.jsdelivr.net/gh/Wheelman-v2/Corporation_Fonts@main/Griun/GriunXHangeul_Bbangsim.woff2") format("woff2");font-display:swap}
   @font-face{font-family:"HA Susukkang";src:url("https://cdn.jsdelivr.net/gh/projectnoonnu/2508-2@1.0/HakgyoansimSusukkangL.woff2") format("woff2");font-display:swap}
   @font-face{font-family:"GT Dotum";font-weight:400;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Regular.woff2") format("woff2");font-display:swap}
   @font-face{font-family:"GT Dotum";font-weight:700;src:url("https://cdn.jsdelivr.net/gh/fonts-archive/GamtanRoadDotum/GamtanRoadDotum-Bold.woff2") format("woff2");font-display:swap}
@@ -143,6 +143,11 @@
   #welcome .en{font-size:3.4vh;margin-top:1vh}
   #welcome .t1,#welcome .t2,#welcome .en{animation:wblink 2.8s ease-in-out infinite}
   @keyframes wblink{0%,100%{opacity:1}50%{opacity:.2}}
+  #welcome .w0{font-family:"GT Dotum",sans-serif;font-weight:700;font-size:4vh;color:var(--sub);margin-bottom:2vh}
+  #welcome .dots i{font-style:normal;animation:wdot 1.5s infinite}
+  #welcome .dots i:nth-child(2){animation-delay:.25s}
+  #welcome .dots i:nth-child(3){animation-delay:.5s}
+  @keyframes wdot{0%,60%,100%{opacity:.15}30%{opacity:1}}
 </style>
 </head>
 <body>
@@ -212,6 +217,7 @@
 <div id="verdict"></div>
 
 <div id="welcome">
+  <div class="w0">경품 추첨 대기 중<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
   <div class="t1">자리에 착석해 주세요</div>
   <div class="t2"><span>18:30</span>부터 시작합니다</div>
   <div class="en">Please take your seat · We start at 18:30</div>
@@ -635,6 +641,7 @@ const WEL=document.getElementById("welcome"), BWEL=document.getElementById("bWel
 function setWelcome(on){ WEL.classList.toggle("hidden", !on); BWEL.textContent = on ? "규칙 화면으로" : "대기 멘트 보기"; }
 BWEL.onclick = () => setWelcome(WEL.classList.contains("hidden"));
 setWelcome(true);
+document.title = "경품 추첨";
 </script>
 </body>
 </html>
